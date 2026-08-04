@@ -156,7 +156,7 @@ export function SmartSearch() {
               onClick={() => pick(g)}
             >
               {/* 1. الصورة ثابتة على اليسار */}
-              <div className="relative shrink-0 order-1">
+              <div className="relative shrink-0">
                 <img
                   src={g.background_image}
                   alt={g.name}
@@ -168,13 +168,13 @@ export function SmartSearch() {
                 />
               </div>
 
-              {/* 2. اسم اللعبة والتفاصيل في الوسط/اليمين بمساحة آمنة */}
-              <div className="min-w-0 flex-1 space-y-1 order-2 text-right px-2">
-                <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground">
+              {/* 2. اسم اللعبة والتفاصيل في الوسط تأخذ المساحة المتبقية بأمان تامة */}
+              <div className="min-w-0 flex-1 space-y-1 text-right px-2">
+                <p className="text-sm font-bold leading-snug truncate text-foreground">
                   {g.name}
                 </p>
                 
-                <div className="flex items-center gap-2 justify-end">
+                <div className="flex items-center gap-1.5 justify-end">
                   <span className="text-[10px] text-muted-foreground">Steam ·</span>
                   {g.steamPrice ? (
                     <span className="text-xs font-bold text-green-400">
@@ -189,7 +189,7 @@ export function SmartSearch() {
               </div>
 
               {/* 3. أزرار الإضافة السريعة */}
-              <div className="hidden shrink-0 gap-1 group-hover:flex md:flex order-3">
+              <div className="hidden shrink-0 gap-1 group-hover:flex md:flex">
                 {quickAdd.map((a) => (
                   <Button
                     key={a.status}
