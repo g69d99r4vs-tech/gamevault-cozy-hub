@@ -103,7 +103,7 @@ export function SmartSearch() {
   };
 
   return (
-    <div ref={boxRef} className="relative">
+    <div ref={boxRef} className="relative w-full">
       {entry && (
         <GameEditDialog
           entry={entry}
@@ -136,7 +136,8 @@ export function SmartSearch() {
       </div>
 
       {open && q.trim().length >= 2 && (
-        <div className="absolute inset-x-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-3xl glass p-2">
+        /* كبرنا عرض القائمة وطولها لتصبح أوسع وأشرح */
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[80vh] overflow-y-auto rounded-3xl glass p-3 shadow-2xl">
           {!data && isFetching && (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -152,10 +153,10 @@ export function SmartSearch() {
           {data?.map((g) => (
             <div
               key={g.id}
-              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-2.5 transition-colors hover:bg-secondary/60 text-right"
+              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/60 text-right mb-1"
               onClick={() => pick(g)}
             >
-              {/* أزرار الإضافة السريعة */}
+              {/* أزرار الإضافة السريعة على اليسار */}
               <div className="hidden shrink-0 gap-1 group-hover:flex md:flex">
                 {quickAdd.map((a) => (
                   <Button
@@ -174,17 +175,13 @@ export function SmartSearch() {
                 ))}
               </div>
 
-              {/* اسم اللعبة والتفاصيل تأخذ المساحة المتبقية بمرونة تامة */}
-              <div className="min-w-0 flex-1 space-y-1">
-                <p 
-                  dir="ltr" 
-                  className="text-sm font-bold leading-tight line-clamp-2 text-foreground text-right"
-                >
+              {/* تفاصيل اللعبة: الاسم يأخذ مساحة واسعة وواضحة */}
+              <div className="min-w-0 flex-1 space-y-1 text-right">
+                <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground">
                   {g.name}
                 </p>
                 
-                <div className="flex items-center gap-2 justify-end">
-                  <span className="text-[10px] text-muted-foreground">Steam ·</span>
+                <div className="flex items-center gap-2 justify-start">
                   {g.steamPrice ? (
                     <span className="text-xs font-bold text-green-400">
                       ${g.steamPrice}
@@ -194,10 +191,11 @@ export function SmartSearch() {
                       مجانية
                     </span>
                   )}
+                  <span className="text-[10px] text-muted-foreground">· Steam</span>
                 </div>
               </div>
 
-              {/* الصورة على اليسار بمقاس ثابت ومستطيل */}
+              {/* الصورة رجعت على اليمين بمقاس مستطيل فخم وثابت */}
               <div className="relative shrink-0">
                 <img
                   src={g.background_image}
@@ -206,7 +204,7 @@ export function SmartSearch() {
                   onError={(e) => {
                     e.currentTarget.src = g.fallback_image;
                   }}
-                  className="w-24 h-14 rounded-lg object-cover shadow-sm" 
+                  className="w-28 h-16 rounded-xl object-cover shadow-md" 
                 />
               </div>
             </div>
