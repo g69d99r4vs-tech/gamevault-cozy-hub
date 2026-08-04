@@ -12,6 +12,7 @@ export type SteamGame = {
   id: number;
   name: string;
   background_image: string;
+  fallback_image: string;
   steamPrice: string;
   steamAppID: string;
 };
@@ -56,8 +57,8 @@ export function SmartSearch() {
           .map((item) => ({
             id: parseInt(item.steamAppID),
             name: item.external,
-            // سحب الصورة الرسمية عالية الجودة من سيرفرات ستيم مباشرة باستخدام الـ ID
             background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.steamAppID}/header.jpg`,
+            fallback_image: item.thumb, // صورة احتياطية لو خربت الأساسية
             steamPrice: item.cheapest,
             steamAppID: item.steamAppID,
           })) as SteamGame[];
@@ -139,7 +140,7 @@ export function SmartSearch() {
           {!data && isFetching && (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-2xl bg-secondary/60" />
+                <div key={i} className="h-16 animate-pulse rounded-2xl bg-secondary/60" />
               ))}
             </div>
           )}
@@ -156,10 +157,15 @@ export function SmartSearch() {
             >
               <div className="relative shrink-0">
                 <img
-                  src={g.background_image ?? "/favicon.ico"}
+                  src={g.background_image}
                   alt={g.name}
                   loading="lazy"
-                  className="size-16 rounded-xl object-cover"
+                  onError={(e) => {
+                    // إذا الصورة العريضة مو متوفرة، يستخدم الصغيرة تلقائياً
+                    e.currentTarget.src = g.fallback_image;
+                  }}
+                  // غيرنا المقاس هنا عشان تصير مستطيلة وعريضة
+                  className="w-28 h-14 rounded-lg object-cover" 
                 />
               </div>
               <div className="min-w-0 flex-1 space-y-0.5">
