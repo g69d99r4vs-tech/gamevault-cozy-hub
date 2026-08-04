@@ -31,8 +31,17 @@ export const searchGames = (q: string, limit = 12): Promise<RawgGame[]> =>
     ? Promise.resolve([])
     : searchGamesFn({ data: { q: q.trim(), limit } }).catch(() => [] as RawgGame[]);
 
-export const getGame = async (id: string | number): Promise<RawgGame> => {
-  const game = await getGameFn({ data: { id: String(id) } });
+export const getGame = async (
+  id: string | number,
+  hint?: { slug?: string; name?: string },
+): Promise<RawgGame> => {
+  const game = await getGameFn({
+    data: {
+      id: String(id),
+      ...(hint?.slug ? { slug: hint.slug } : {}),
+      ...(hint?.name ? { name: hint.name } : {}),
+    },
+  });
   if (!game) throw new Error("تعذر العثور على اللعبة");
   return game;
 };
