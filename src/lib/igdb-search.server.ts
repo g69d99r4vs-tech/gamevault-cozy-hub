@@ -72,6 +72,28 @@ export async function searchIgdb(q: string, limit = 12): Promise<GameDTO[]> {
 
 export const gameById = (id: string | number) => queryOneGame(`id = ${Number(id)}`);
 
+/**
+ * جلب لعبة بالمعرّف مع بدائل ذكية: المعرّفات القديمة (RAWG) لم تعد صالحة في IGDB،
+ * لذا نرجع إلى الـslug ثم الاسم المحفوظ في المكتبة.
+ */
+export async function resolveGame(
+  id: string | number,
+  hint?: { slug?: string; name?: string },
+): Promise<GameDTO | null> {
+  const direct = Number.isFinite(Number(id)) ? await gameById(id).catch(() => null) : null;
+  if (direct) return direct;
+  if (hint?.slug) {
+    const bySlug = await queryOneGame(`slug = "${escapeSearch(hint.slug)}"`).catch(() => null);
+    if (bySlug) return bySlug;
+  }
+  const term = hint?.name ?? hint?.slug?.replace(/-/g, " ");
+  if (term) {
+    const [first] = await searchIgdb(term, 1);
+    return first ?? null;
+  }
+  return null;
+}
+
 export async function gameBySlug(slug: string): Promise<GameDTO | null> {
   const direct = await queryOneGame(`slug = "${escapeSearch(slug)}"`);
   if (direct) return direct;

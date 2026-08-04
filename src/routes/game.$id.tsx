@@ -45,26 +45,52 @@ function GamePage() {
   );
 
   const { data: game, isLoading } = useQuery({
-    queryKey: ["game", id],
-    queryFn: () => getGame(id),
+    queryKey: ["game", id, entry?.slug ?? null],
+    queryFn: () =>
+      getGame(id, {
+        ...(entry?.slug ? { slug: entry.slug } : {}),
+        ...(entry?.name ? { name: entry.name } : {}),
+      }),
+    retry: false,
     staleTime: 1000 * 60 * 60,
   });
+  const resolvedId = game?.id ?? Number(id);
   const { data: shots } = useQuery({
-    queryKey: ["shots", id],
-    queryFn: () => getScreenshots(id),
+    queryKey: ["shots", resolvedId],
+    queryFn: () => getScreenshots(resolvedId),
+    enabled: !!game,
     staleTime: 1000 * 60 * 60,
   });
   const { data: similar } = useQuery({
-    queryKey: ["similar", id],
-    queryFn: () => getSimilar(id),
+    queryKey: ["similar", resolvedId],
+    queryFn: () => getSimilar(resolvedId),
+    enabled: !!game,
     staleTime: 1000 * 60 * 60,
   });
 
-  if (isLoading || !game) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="h-72 animate-pulse rounded-[2rem] bg-card/70" />
         <div className="h-40 animate-pulse rounded-3xl bg-card/70" />
+      </div>
+    );
+  }
+
+  if (!game) {
+    return (
+      <div className="space-y-4 rounded-3xl border border-border bg-card p-8 text-center">
+        <p className="font-display text-xl font-black">
+          <bdi>{entry?.name ?? "اللعبة"}</bdi>
+        </p>
+        <p className="text-sm text-muted-foreground">
+          تعذر جلب تفاصيل هذه اللعبة من قاعدة البيانات. جرّب البحث عنها بالاسم وإضافتها من جديد.
+        </p>
+        <Button asChild className="rounded-xl">
+          <Link to="/search" search={{ q: entry?.name ?? "" }}>
+            ابحث عنها
+          </Link>
+        </Button>
       </div>
     );
   }
