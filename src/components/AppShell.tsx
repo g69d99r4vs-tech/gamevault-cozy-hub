@@ -10,7 +10,6 @@ import {
   Crown,
   PartyPopper,
   BarChart3,
-  Tag,
 } from "lucide-react";
 import { useCurrentData, useStore } from "@/lib/store";
 import { computeLevel } from "@/lib/stats";
@@ -21,11 +20,10 @@ import { UserAvatar } from "./UserAvatar";
 import logoUrl from "@/assets/gamehub-logo.png";
 import type { ReactNode } from "react";
 
-/** التنقل السفلي: التبويبات الرئيسية (شاملة العروض) */
+/** التنقل السفلي: 4 تبويبات (من اليمين لليسار، الإعدادات في أقصى اليسار) */
 const mainNav = [
   { to: "/home", label: "الرئيسية", icon: LayoutDashboard },
   { to: "/library", label: "المكتبة", icon: Library },
-  { to: "/deals", label: "العروض", icon: Tag },
   { to: "/upcoming", label: "الخطة", icon: CalendarClock },
   { to: "/settings", label: "الإعدادات", icon: Settings2 },
 ] as const;
@@ -38,6 +36,8 @@ const nav = [
   { to: "/hall", label: "أفضل 10 ألعاب", icon: Crown },
   { to: "/wrap", label: "ملخص السنة", icon: PartyPopper },
 ] as const;
+
+
 
 function LevelBar() {
   const data = useCurrentData();
@@ -121,6 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="size-9 shrink-0 rounded-xl ring-1 ring-primary/40 lg:hidden"
             />
             <Link to="/profile" className="lg:hidden">
+
               <UserAvatar value={profile.avatar} size={40} />
             </Link>
             <div className="min-w-0 flex-1">

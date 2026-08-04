@@ -1,5 +1,3 @@
-Home
-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import {
