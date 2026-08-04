@@ -8,9 +8,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GameEditDialog } from "@/components/GameEditDialog";
 
-// نوع البيانات المخصص لـ Steam عبر CheapShark
 export type SteamGame = {
-  id: number; // بنخليه هو نفسه رقم اللعبة في ستيم
+  id: number;
   name: string;
   background_image: string;
   steamPrice: string;
@@ -46,20 +45,19 @@ export function SmartSearch() {
       if (debounced.length < 2) return [];
 
       try {
-        // نطلب البيانات من CheapShark (بدون بروكسي، وبدون حظر)
         const res = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(debounced)}&limit=12`);
         if (!res.ok) return [];
         
         const json = await res.json();
         if (!Array.isArray(json)) return [];
 
-        // تصفية الألعاب اللي مالها كود في ستيم، وتجهيز البيانات
         return json
-          .filter((item) => item.steamAppID) // نبي ألعاب ستيم فقط
+          .filter((item) => item.steamAppID)
           .map((item) => ({
-            id: parseInt(item.steamAppID), // رقم ستيم هو الأساس الحين!
+            id: parseInt(item.steamAppID),
             name: item.external,
-            background_image: item.thumb,
+            // سحب الصورة الرسمية عالية الجودة من سيرفرات ستيم مباشرة باستخدام الـ ID
+            background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.steamAppID}/header.jpg`,
             steamPrice: item.cheapest,
             steamAppID: item.steamAppID,
           })) as SteamGame[];
@@ -84,7 +82,6 @@ export function SmartSearch() {
   const pick = (g: SteamGame) => {
     setOpen(false);
     setQ("");
-    // ينقلك لصفحة اللعبة باستخدام رقم اللعبة في ستيم
     navigate({ to: "/game/$id", params: { id: String(g.id) } });
   };
 
@@ -97,7 +94,6 @@ export function SmartSearch() {
 
   const add = (g: SteamGame, status: Status) => {
     buzz(status === "completed" ? [40, 60, 40] : 20);
-    // دمج وهمي للحقول عشان متجر البيانات حقك ما يضرب
     addGame({ ...g, released: "Steam", genres: [], developers: [] } as any, status);
     setOpen(false);
     setQ("");
@@ -173,11 +169,11 @@ export function SmartSearch() {
                 
                 {g.steamPrice ? (
                   <p className="text-[12px] font-bold text-green-400 line-clamp-1">
-                    السعر: ${g.steamPrice}
+                    ${g.steamPrice}
                   </p>
                 ) : (
                   <p className="text-[12px] font-bold text-muted-foreground line-clamp-1">
-                    مجانية أو غير متوفرة
+                    مجانية
                   </p>
                 )}
 
