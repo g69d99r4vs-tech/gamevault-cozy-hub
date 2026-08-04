@@ -174,13 +174,17 @@ export function SmartSearch() {
                 ))}
               </div>
 
-              {/* تفاصيل اللعبة (الاسم والسعر) تأخذ المساحة المتبقية بمرونة */}
+              {/* اسم اللعبة والتفاصيل تأخذ المساحة المتبقية بمرونة تامة */}
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm font-bold leading-tight truncate text-foreground">
+                <p 
+                  dir="ltr" 
+                  className="text-sm font-bold leading-tight line-clamp-2 text-foreground text-right"
+                >
                   {g.name}
                 </p>
                 
-                <div className="flex items-center gap-2 justify-start">
+                <div className="flex items-center gap-2 justify-end">
+                  <span className="text-[10px] text-muted-foreground">Steam ·</span>
                   {g.steamPrice ? (
                     <span className="text-xs font-bold text-green-400">
                       ${g.steamPrice}
@@ -190,11 +194,10 @@ export function SmartSearch() {
                       مجانية
                     </span>
                   )}
-                  <span className="text-[10px] text-muted-foreground">· Steam</span>
                 </div>
               </div>
 
-              {/* الصورة على اليمين بمقاس ثابت ومستطيل */}
+              {/* الصورة على اليسار بمقاس ثابت ومستطيل */}
               <div className="relative shrink-0">
                 <img
                   src={g.background_image}
