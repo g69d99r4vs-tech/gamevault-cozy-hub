@@ -4,8 +4,8 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Search, Loader2, Plus, X } from "lucide-react";
 import { useStore, type Status } from "@/lib/store";
 import { buzz } from "@/lib/haptics";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { GameEditDialog } from "@/components/GameEditDialog";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : "" }),
@@ -46,7 +46,9 @@ function SearchPage() {
   const { q } = Route.useSearch();
   const navigate = useNavigate();
   const [term, setTerm] = useState(q);
-  const addGame = useStore((s) => s.addGame);
+  
+  // حالة التحكم في فتح نافذة التعديل والخصائص عند الضغط على زر الحالة
+  const [selectedGameForEdit, setSelectedGameForEdit] = useState<{ game: any; initialStatus: Status } | null>(null);
 
   const { data, isFetching } = useQuery({
     queryKey: ["search-full-steam", q],
@@ -80,17 +82,18 @@ function SearchPage() {
     placeholderData: keepPreviousData,
   });
 
-  const add = (game: SteamSearchResult, status: Status) => {
-    buzz(status === "completed" ? [40, 60, 40] : 20);
-    addGame({
+  const handleOpenEdit = (game: SteamSearchResult, status: Status) => {
+    buzz(20);
+    // تجهيز اللعبة بالبيانات المتوافقة مع نظام الهيكل وتفعيل النافذة المنبثقة
+    const formattedGame = {
       id: game.id,
       name: game.name,
       background_image: game.headerImage,
       released: "Steam",
       genres: [],
       developers: [],
-    } as any, status);
-    toast.success(`أُضيفت ${game.name} إلى مكتبتك`);
+    };
+    setSelectedGameForEdit({ game: formattedGame, initialStatus: status });
   };
 
   return (
@@ -223,7 +226,7 @@ function SearchPage() {
                     className="h-8 rounded-lg px-3 text-xs font-medium bg-secondary/80 hover:bg-primary hover:text-primary-foreground transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      add(game, a.status);
+                      handleOpenEdit(game, a.status);
                     }}
                   >
                     <Plus className="size-3.5 ml-1" />
@@ -235,6 +238,16 @@ function SearchPage() {
           );
         })}
       </div>
+
+      {/* نافذة التعديل المنبثقة تفتح تلقائياً عند الضغط على أي حالة */}
+      {selectedGameForEdit && (
+        <GameEditDialog
+          game={selectedGameForEdit.game}
+          initialStatus={selectedGameForEdit.initialStatus}
+          open={!!selectedGameForEdit}
+          onOpenChange={(open) => !open && setSelectedGameForEdit(null)}
+        />
+      )}
     </div>
   );
 }
