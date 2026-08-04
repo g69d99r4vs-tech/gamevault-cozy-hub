@@ -1,205 +1,158 @@
-import { useEffect, useRef, useState } from "react";
+Smartsearch
+
+import { useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Loader2, Plus } from "lucide-react";
+import { searchGames, isUnreleased, type RawgGame } from "@/lib/rawg";
 import { useStore, type Status } from "@/lib/store";
 import { buzz } from "@/lib/haptics";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { GameEditDialog } from "@/components/GameEditDialog";
 
-export type SteamGame = {
-  id: number;
-  name: string;
-  background_image: string;
-  fallback_image: string;
-  steamPrice: string;
-  steamAppID: string;
-};
+
+export const Route = createFileRoute("/search")({
+  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : "" }),
+  head: () => ({
+    meta: [
+      { title: "بحث الألعاب — GameHub" },
+      {
+        name: "description",
+        content: "ابحث في آلاف ألعاب PC وبلايستيشن وإكس بوكس وسويتش وأضفها لمكتبتك فورًا.",
+      },
+      { property: "og:title", content: "بحث الألعاب — GameHub" },
+      { property: "og:description", content: "نتائج بحث فورية بأسلوب ستيم مع إضافة سريعة للمكتبة." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: SearchPage,
+});
 
 const quickAdd: { status: Status; label: string }[] = [
   { status: "current", label: "قيد اللعب" },
   { status: "backlog", label: "الانتظار" },
+  { status: "hype", label: "المرتقبة" },
   { status: "completed", label: "مكتملة" },
 ];
 
-export function SmartSearch() {
-  const [q, setQ] = useState("");
-  const [debounced, setDebounced] = useState("");
-  const [open, setOpen] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
+function SearchPage() {
+  const { q } = Route.useSearch();
   const navigate = useNavigate();
+  const [term, setTerm] = useState(q);
   const addGame = useStore((s) => s.addGame);
-  const entry = useStore((s) =>
-    editId ? (s.users[s.currentUser].entries.find((e) => e.id === editId) ?? null) : null,
-  );
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(q.trim()), 300);
-    return () => clearTimeout(t);
-  }, [q]);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["steam-search-direct", debounced],
-    queryFn: async () => {
-      if (debounced.length < 2) return [];
-
-      try {
-        const res = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(debounced)}&limit=12`);
-        if (!res.ok) return [];
-        
-        const json = await res.json();
-        if (!Array.isArray(json)) return [];
-
-        return json
-          .filter((item) => item.steamAppID)
-          .map((item) => ({
-            id: parseInt(item.steamAppID),
-            name: item.external,
-            background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.steamAppID}/header.jpg`,
-            fallback_image: item.thumb,
-            steamPrice: item.cheapest,
-            steamAppID: item.steamAppID,
-          })) as SteamGame[];
-      } catch (err) {
-        console.error("Search Error:", err);
-        return [];
-      }
-    },
-    enabled: debounced.length >= 2,
+    queryKey: ["search-full", q],
+    queryFn: () => searchGames(q, 60),
+    enabled: q.trim().length >= 2,
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
   });
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
-  const pick = (g: SteamGame) => {
-    setOpen(false);
-    setQ("");
-    navigate({ to: "/game/$id", params: { id: String(g.id) } });
-  };
-
-  const submit = () => {
-    const term = q.trim();
-    if (term.length < 2) return;
-    setOpen(false);
-    navigate({ to: "/search", search: { q: term } });
-  };
-
-  const add = (g: SteamGame, status: Status) => {
-    buzz(status === "completed" ? [40, 60, 40] : 20);
-    addGame({ ...g, released: "Steam", genres: [], developers: [] } as any, status);
-    setOpen(false);
-    setQ("");
-    if (status === "completed") setEditId(g.id);
-    else toast.success(`أُضيفت ${g.name}`);
+  const add = (g: RawgGame, status: Status) => {
+    buzz(20);
+    addGame(g, status);
+    toast.success(`أُضيفت ${g.name}`);
   };
 
   return (
-    <div ref={boxRef} className="relative w-full">
-      {entry && (
-        <GameEditDialog
-          entry={entry}
-          open={editId !== null}
-          onOpenChange={(o) => !o && setEditId(null)}
-        />
-      )}
-      <div className="flex items-center gap-2 rounded-2xl glass px-4 py-2.5">
+    <div className="space-y-6">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          navigate({ to: "/search", search: { q: term.trim() } });
+        }}
+        className="flex items-center gap-2 rounded-2xl glass px-4 py-3"
+      >
         <Search className="size-4 shrink-0 text-muted-foreground" />
         <input
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              submit();
-            }
-            if (e.key === "Escape") setOpen(false);
-          }}
-          enterKeyHint="search"
-          type="search"
-          placeholder="ابحث عن أي لعبة في ستيم..."
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
+          autoFocus
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="ابحث عن أي لعبة…"
+          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
         {isFetching && <Loader2 className="size-4 animate-spin text-primary" />}
+      </form>
+
+      <div className="flex items-baseline justify-between">
+        <h1 className="font-display text-2xl font-black">
+          نتائج البحث {q && <bdi className="text-primary">«{q}»</bdi>}
+        </h1>
+        {data && <span className="text-xs text-muted-foreground">{data.length} لعبة</span>}
       </div>
 
-      {open && q.trim().length >= 2 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[80vh] overflow-y-auto rounded-3xl glass p-3 shadow-2xl">
-          {!data && isFetching && (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-14 animate-pulse rounded-2xl bg-secondary/60" />
-              ))}
-            </div>
-          )}
-          
-          {data?.length === 0 && !isFetching && (
-            <p className="p-4 text-center text-sm text-muted-foreground">لا توجد نتائج في ستيم</p>
-          )}
-          
-          {data?.map((g) => (
+      {q.trim().length < 2 && (
+        <p className="rounded-3xl border border-border p-8 text-center text-sm text-muted-foreground">
+          اكتب حرفين على الأقل لبدء البحث
+        </p>
+      )}
+
+      {!data && q.trim().length >= 2 && (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-64 animate-pulse rounded-3xl bg-secondary/60" />
+          ))}
+        </div>
+      )}
+
+      {data?.length === 0 && (
+        <p className="rounded-3xl border border-border p-8 text-center text-sm text-muted-foreground">
+          لا توجد نتائج مطابقة
+        </p>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        {data?.map((g) => {
+          const soon = isUnreleased(g);
+          const actions = soon
+            ? quickAdd.filter((a) => a.status === "hype")
+            : quickAdd.filter((a) => a.status !== "hype");
+          return (
             <div
               key={g.id}
-              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-2.5 transition-colors hover:bg-secondary/60 mb-1"
-              onClick={() => pick(g)}
+              className="group overflow-hidden rounded-3xl border border-border bg-card surface-hover"
             >
-              {/* 1. الصورة صارت صغيرة ومرتبة على اليسار بدون ما تغطي شي */}
-              <div className="relative shrink-0">
-                <img
-                  src={g.background_image}
-                  alt={g.name}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = g.fallback_image;
-                  }}
-                  className="w-14 h-14 rounded-xl object-cover shadow-sm" 
-                />
-              </div>
-
-              {/* 2. مساحة الكتابة واسعة وأخذت كامل راحتها */}
-              <div className="min-w-0 flex-1 space-y-1 text-right px-2">
-                <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground">
-                  {g.name}
-                </p>
-                
-                <div className="flex items-center gap-1.5 justify-end">
-                  <span className="text-[10px] text-muted-foreground">Steam ·</span>
-                  {g.steamPrice ? (
-                    <span className="text-xs font-bold text-green-400">
-                      ${g.steamPrice}
-                    </span>
+              <Link to="/game/$id" params={{ id: String(g.id) }} className="block">
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  {g.background_image ? (
+                    <img
+                      src={g.background_image}
+                      alt={g.name}
+                      loading="lazy"
+                      className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
                   ) : (
-                    <span className="text-xs font-bold text-muted-foreground">
-                      مجانية
+                    <div className="size-full bg-secondary" />
+                  )}
+                  <span className="absolute right-2 top-2 rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-bold backdrop-blur">
+                    {soon ? "قريبًا" : (g.released?.slice(0, 4) ?? "—")}
+                  </span>
+                  {!!g.metacritic && (
+                    <span className="absolute left-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                      {g.metacritic}
                     </span>
                   )}
                 </div>
-              </div>
-
-              {/* 3. أزرار الإضافة السريعة */}
-              <div className="hidden shrink-0 gap-1 group-hover:flex md:flex">
-                {quickAdd.map((a) => (
+                <div className="space-y-1 p-3">
+                  <p className="text-sm font-bold leading-snug break-words line-clamp-2">
+                    <bdi>{g.name}</bdi>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-1">
+                    {(g.genres ?? []).map((x) => x.name).join("، ") || "—"}
+                  </p>
+                </div>
+              </Link>
+              <div className="flex flex-wrap gap-1 px-3 pb-3">
+                {actions.map((a) => (
                   <Button
                     key={a.status}
                     size="sm"
                     variant="secondary"
                     className="h-7 rounded-lg px-2 text-[11px]"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      add(g, a.status);
-                    }}
+                    onClick={() => add(g, a.status)}
                   >
                     <Plus className="size-3" />
                     {a.label}
@@ -207,9 +160,9 @@ export function SmartSearch() {
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }
