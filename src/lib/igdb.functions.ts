@@ -8,10 +8,10 @@ export const searchGamesFn = createServerFn({ method: "POST" })
   });
 
 export const getGameFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .inputValidator((d: { id: string; slug?: string; name?: string }) => d)
   .handler(async ({ data }) => {
-    const { gameById } = await import("./igdb-search.server");
-    return gameById(data.id);
+    const { resolveGame } = await import("./igdb-search.server");
+    return resolveGame(data.id, { ...(data.slug ? { slug: data.slug } : {}), ...(data.name ? { name: data.name } : {}) });
   });
 
 export const getGameBySlugFn = createServerFn({ method: "POST" })
