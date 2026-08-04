@@ -8,13 +8,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GameEditDialog } from "@/components/GameEditDialog";
 
-// نوع البيانات الجديد المتوافق مع Steam
-export type SteamSearchResult = {
-  id: number;
+// نوع البيانات المخصص لـ Steam عبر CheapShark
+export type SteamGame = {
+  id: number; // بنخليه هو نفسه رقم اللعبة في ستيم
   name: string;
   background_image: string;
-  steamPrice: string | null;
-  metacritic?: number | null;
+  steamPrice: string;
+  steamAppID: string;
 };
 
 const quickAdd: { status: Status; label: string }[] = [
@@ -36,36 +36,35 @@ export function SmartSearch() {
   );
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(q.trim()), 300); // زدنا الوقت شوي عشان ما نضغط سيرفرات ستيم
+    const t = setTimeout(() => setDebounced(q.trim()), 300);
     return () => clearTimeout(t);
   }, [q]);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["steam-search", debounced],
+    queryKey: ["steam-search-direct", debounced],
     queryFn: async () => {
       if (debounced.length < 2) return [];
 
       try {
-        // نستخدم بروكسي لتجاوز حظر ستيم للمتصفحات (CORS Error)
-        const targetUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(debounced)}&l=english&cc=US`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-
-        const res = await fetch(proxyUrl);
+        // نطلب البيانات من CheapShark (بدون بروكسي، وبدون حظر)
+        const res = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(debounced)}&limit=12`);
         if (!res.ok) return [];
         
         const json = await res.json();
-        if (!json.items || !Array.isArray(json.items)) return [];
+        if (!Array.isArray(json)) return [];
 
-        // ترتيب البيانات بالشكل اللي يفهمه تصميم موقعك
-        return json.items.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          background_image: item.tiny_image, // صورة ستيم المصغرة
-          steamPrice: item.price ? (item.price.final / 100).toFixed(2) : null,
-          metacritic: item.metascore || null,
-        })) as SteamSearchResult[];
+        // تصفية الألعاب اللي مالها كود في ستيم، وتجهيز البيانات
+        return json
+          .filter((item) => item.steamAppID) // نبي ألعاب ستيم فقط
+          .map((item) => ({
+            id: parseInt(item.steamAppID), // رقم ستيم هو الأساس الحين!
+            name: item.external,
+            background_image: item.thumb,
+            steamPrice: item.cheapest,
+            steamAppID: item.steamAppID,
+          })) as SteamGame[];
       } catch (err) {
-        console.error("Steam Search Error:", err);
+        console.error("Search Error:", err);
         return [];
       }
     },
@@ -82,10 +81,10 @@ export function SmartSearch() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const pick = (g: SteamSearchResult) => {
+  const pick = (g: SteamGame) => {
     setOpen(false);
     setQ("");
-    // هذا السطر يضمن إنك تبقى في موقعك ويرسلك لصفحة اللعبة الداخلية
+    // ينقلك لصفحة اللعبة باستخدام رقم اللعبة في ستيم
     navigate({ to: "/game/$id", params: { id: String(g.id) } });
   };
 
@@ -96,11 +95,10 @@ export function SmartSearch() {
     navigate({ to: "/search", search: { q: term } });
   };
 
-  // حولنا g إلى any مؤقتاً لتوافق متجر البيانات القديم
-  const add = (g: SteamSearchResult, status: Status) => {
+  const add = (g: SteamGame, status: Status) => {
     buzz(status === "completed" ? [40, 60, 40] : 20);
-    // دمج وهمي لبعض الحقول لتجنب أخطاء المتجر القديم
-    addGame({ ...g, released: "Steam", genres: [] } as any, status);
+    // دمج وهمي للحقول عشان متجر البيانات حقك ما يضرب
+    addGame({ ...g, released: "Steam", genres: [], developers: [] } as any, status);
     setOpen(false);
     setQ("");
     if (status === "completed") setEditId(g.id);
@@ -149,9 +147,11 @@ export function SmartSearch() {
               ))}
             </div>
           )}
+          
           {data?.length === 0 && !isFetching && (
             <p className="p-4 text-center text-sm text-muted-foreground">لا توجد نتائج في ستيم</p>
           )}
+          
           {data?.map((g) => (
             <div
               key={g.id}
@@ -183,7 +183,6 @@ export function SmartSearch() {
 
                 <p className="text-[11px] text-muted-foreground line-clamp-1">
                   متجر Steam
-                  {g.metacritic ? ` · ميتاكريتيك ${g.metacritic}` : ""}
                 </p>
               </div>
 
