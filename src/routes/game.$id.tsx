@@ -13,8 +13,8 @@ import { ExternalLink, ArrowRight, Plus, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/game/$id")({
   head: () => ({
     meta: [
-      { title: "تفاصيل اللعبة — Steam & GameHub" },
-      { name: "description", content: "صفحة تفاصيل اللعبة المباشرة من متجر ستيم." },
+      { title: "تفاصيل اللعبة — GameHub" },
+      { name: "description", content: "صفحة تفاصيل اللعبة." },
     ],
   }),
   component: GamePage,
@@ -33,38 +33,58 @@ function GamePage() {
   const [editing, setEditing] = useState(false);
   const [celebrated, setCelebrated] = useState<GameEntry | null>(null);
   
+  // 1. نبحث أولاً إذا كانت اللعبة مسجلة مسبقاً في مكتبة المستخدم المحفوظة
   const entry = useStore(
-    (s) => s.users[s.currentUser].entries.find((e) => e.id === Number(id)) ?? null,
+    (s) => s.users[s.currentUser].entries.find((e) => String(e.id) === String(id) || e.slug === id) ?? null,
   );
 
-  // جلب تفاصيل اللعبة وأسعارها وصورها عبر CheapShark الآمن والمستقر
   const { data: game, isLoading } = useQuery({
-    queryKey: ["steam-game-cheapshark", id],
+    queryKey: ["game-universal-details", id],
     queryFn: async () => {
-      try {
-        const res = await fetch(`https://www.cheapshark.com/api/1.0/games?id=${id}`);
-        if (!res.ok) return null;
-        const json = await res.json();
-        
-        if (!json || !json.info) return null;
-
-        const info = json.info;
-        const cheapestDeal = json.deals?.[0];
-
+      // إذا وُجدت في المكتبة المحلية، نعتمد بياناتها مباشرة بدون أي خطأ
+      if (entry) {
         return {
-          id: Number(id),
-          name: info.name || entry?.name || "لعبة ستيم",
-          background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}/header.jpg`,
-          fallback_image: info.thumb || "",
+          id: entry.id,
+          name: entry.name,
+          background_image: entry.background_image || `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}/header.jpg`,
+          released: entry.released || "Steam",
           website: `https://store.steampowered.com/app/${id}`,
-          price: cheapestDeal?.price || null,
-          retailPrice: cheapestDeal?.retailPrice || null,
-          dealsCount: json.deals?.length || 0,
+          price: null,
         };
-      } catch (err) {
-        console.error("Game Details Error:", err);
-        return null;
       }
+
+      // 2. إذا لم تكن بالمكتبة، نجرب جلبها كـ Steam App ID من CheapShark
+      if (!isNaN(Number(id))) {
+        try {
+          const res = await fetch(`https://www.cheapshark.com/api/1.0/games?id=${id}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.info) {
+              return {
+                id: Number(id),
+                name: json.info.name,
+                background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}/header.jpg`,
+                fallback_image: json.info.thumb || "",
+                released: "Steam",
+                website: `https://store.steampowered.com/app/${id}`,
+                price: json.deals?.[0]?.price || null,
+              };
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // 3. الحل الاحتياطي النهائي: بناء اسم مبدئي من الـ ID أو النص القادم لكي لا تصبح الصفحة فارغة أبداً
+      return {
+        id: id,
+        name: typeof id === 'string' && isNaN(Number(id)) ? id.replace(/-/g, ' ').toUpperCase() : `لعبة رقم #${id}`,
+        background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}/header.jpg`,
+        released: "Steam",
+        website: `https://store.steampowered.com/app/${id}`,
+        price: null,
+      };
     },
     retry: false,
     staleTime: 1000 * 60 * 60,
@@ -78,29 +98,11 @@ function GamePage() {
     );
   }
 
-  if (!game) {
-    return (
-      <div className="space-y-4 rounded-3xl border border-border bg-card p-8 text-center max-w-lg mx-auto mt-12">
-        <p className="font-display text-xl font-black">
-          <bdi>{entry?.name ?? "اللعبة"}</bdi>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          تعذر جلب تفاصيل هذه اللعبة. جرّب البحث عنها من جديد.
-        </p>
-        <Button asChild className="rounded-xl">
-          <Link to="/search" search={{ q: entry?.name ?? "" }}>
-            ابحث عنها في ستيم
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="relative space-y-8 pb-24 max-w-4xl mx-auto px-4 pt-4">
       <CelebrationModal game={celebrated} onClose={() => setCelebrated(null)} />
 
-      {/* زر الرجوع للخلف */}
+      {/* زر الرجوع */}
       <div>
         <button
           onClick={() => window.history.back()}
@@ -112,7 +114,7 @@ function GamePage() {
       </div>
 
       {/* خلفية ضبابية فخمة */}
-      {game.background_image && (
+      {game?.background_image && (
         <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <img
             src={game.background_image}
@@ -132,39 +134,32 @@ function GamePage() {
         />
       )}
 
-      {/* قسم الهيدر الأساسي للعبة */}
+      {/* قسم الهيدر */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="relative overflow-hidden rounded-[2rem] border border-border"
       >
         <img
-          src={game.background_image}
-          alt={game.name}
-          onError={(e) => {
-            e.currentTarget.src = game.fallback_image;
-          }}
+          src={game?.background_image}
+          alt={game?.name}
           className="absolute inset-0 size-full object-cover opacity-40"
         />
         <div className="relative bg-gradient-to-t from-card via-card/70 to-transparent p-6 pt-40 md:p-10 md:pt-56 space-y-4">
-          <h1 className="font-display text-3xl font-black md:text-5xl">{game.name}</h1>
+          <h1 className="font-display text-3xl font-black md:text-5xl">{game?.name}</h1>
           
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold text-muted-foreground backdrop-blur">
-              متجر Steam
+              Steam Store
             </span>
-            {game.price ? (
+            {game?.price && (
               <span className="rounded-full bg-emerald-500/20 px-3.5 py-1 text-xs font-extrabold text-emerald-400">
                 ${game.price}
-              </span>
-            ) : (
-              <span className="rounded-full bg-secondary/80 px-3.5 py-1 text-xs font-extrabold text-muted-foreground">
-                مجانية أو غير متوفرة
               </span>
             )}
           </div>
 
-          {/* أزرار التتبع والموقع الرسمي */}
+          {/* أزرار التتبع */}
           <div className="flex flex-wrap gap-2 pt-2">
             {addOptions.map((o) => (
               <Button
@@ -175,9 +170,9 @@ function GamePage() {
                 onClick={() => {
                   buzz(o.v === "completed" ? [40, 60, 40] : 20);
                   addGame({
-                    id: game.id,
-                    name: game.name,
-                    background_image: game.background_image,
+                    id: game?.id,
+                    name: game?.name,
+                    background_image: game?.background_image,
                     released: "Steam",
                     genres: [],
                     developers: [],
@@ -195,7 +190,7 @@ function GamePage() {
                 تعديل التتبع
               </Button>
             )}
-            {game.website && (
+            {game?.website && (
               <a href={game.website} target="_blank" rel="noreferrer">
                 <Button size="sm" variant="ghost" className="rounded-xl glass">
                   <ExternalLink className="size-3.5 ml-1" /> متجر Steam
@@ -206,7 +201,7 @@ function GamePage() {
         </div>
       </motion.section>
 
-      {/* بطاقة الختم إذا كانت مكتملة */}
+      {/* بطاقة الختم */}
       {entry?.status === "completed" && (
         <section className="rounded-3xl border border-border bg-card p-6">
           <h2 className="mb-3 font-display text-lg font-bold">بطاقة الختم</h2>
@@ -214,7 +209,7 @@ function GamePage() {
         </section>
       )}
 
-      {/* ملاحظات ومراجعات المستخدم */}
+      {/* ملاحظات ومراجعات */}
       {entry && (entry.review || entry.notes) && (
         <section className="rounded-3xl border border-border bg-card p-6">
           <h2 className="mb-2 font-display text-lg font-bold">ملاحظاتك</h2>
