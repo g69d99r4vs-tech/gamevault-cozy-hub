@@ -9,6 +9,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GameEditDialog } from "@/components/GameEditDialog";
 
+// دمجنا نوع جديد عشان يستقبل السعر من ستيم
+export type GameWithPrice = RawgGame & {
+  steamPrice?: string | null;
+  steamAppID?: string | null;
+};
 
 const quickAdd: { status: Status; label: string }[] = [
   { status: "current", label: "قيد اللعب" },
@@ -29,7 +34,6 @@ export function SmartSearch() {
     editId ? (s.users[s.currentUser].entries.find((e) => e.id === editId) ?? null) : null,
   );
 
-  // استعلام فوري بأسلوب ستيم مع تهدئة خفيفة تمنع إغراق الشبكة
   useEffect(() => {
     const t = setTimeout(() => setDebounced(q.trim()), 160);
     return () => clearTimeout(t);
@@ -37,7 +41,31 @@ export function SmartSearch() {
 
   const { data, isFetching } = useQuery({
     queryKey: ["search", debounced],
-    queryFn: () => searchGames(debounced, 14),
+    queryFn: async () => {
+      // 1. نجيب الألعاب من مصدرها الأصلي عشان الصور والتفاصيل
+      const games = await searchGames(debounced, 14);
+
+      // 2. نجيب الأسعار من ستيم عبر وسيط لتفادي مشاكل الـ CORS
+      try {
+        const priceRes = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${debounced}&limit=14`);
+        const priceData = await priceRes.json();
+
+        // 3. ندمج السعر مع اللعبة المطابقة
+        return games.map((game) => {
+          const matched = priceData.find((p: any) =>
+            game.name.toLowerCase().includes(p.external.toLowerCase()) ||
+            p.external.toLowerCase().includes(game.name.toLowerCase())
+          );
+          return {
+            ...game,
+            steamPrice: matched?.cheapest || null,
+            steamAppID: matched?.steamAppID || null,
+          } as GameWithPrice;
+        });
+      } catch (err) {
+        return games as GameWithPrice[]; // في حال فشل جلب السعر، ترجع الألعاب طبيعي
+      }
+    },
     enabled: debounced.length >= 2,
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
@@ -51,8 +79,7 @@ export function SmartSearch() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-
-  const pick = (g: RawgGame) => {
+  const pick = (g: GameWithPrice) => {
     setOpen(false);
     setQ("");
     navigate({ to: "/game/$id", params: { id: String(g.id) } });
@@ -65,7 +92,7 @@ export function SmartSearch() {
     navigate({ to: "/search", search: { q: term } });
   };
 
-  const add = (g: RawgGame, status: Status) => {
+  const add = (g: GameWithPrice, status: Status) => {
     buzz(status === "completed" ? [40, 60, 40] : 20);
     addGame(g, status);
     setOpen(false);
@@ -107,7 +134,6 @@ export function SmartSearch() {
         {isFetching && <Loader2 className="size-4 animate-spin text-primary" />}
       </div>
 
-
       {open && q.trim().length >= 2 && (
         <div className="absolute inset-x-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-3xl glass p-2">
           {!data && (
@@ -147,6 +173,14 @@ export function SmartSearch() {
                   {isUnreleased(g) ? (g.released ?? "بلا تاريخ") : (g.released?.slice(0, 4) ?? "—")} ·{" "}
                   {(g.genres ?? []).map((x) => x.name).join("، ")}
                 </p>
+                
+                {/* هنا تم إضافة السعر باللون الأخضر ليكون بارزاً */}
+                {g.steamPrice && (
+                  <p className="text-[12px] font-bold text-green-400 line-clamp-1">
+                    السعر في ستيم: ${g.steamPrice}
+                  </p>
+                )}
+
                 <p className="text-[11px] text-muted-foreground line-clamp-1">
                   {g.developers?.[0]?.name ?? ""}
                   {g.metacritic ? ` · ميتاكريتيك ${g.metacritic}` : ""}
@@ -174,7 +208,6 @@ export function SmartSearch() {
                   </Button>
                 ))}
               </div>
-
             </div>
           ))}
           {!!data?.length && (
