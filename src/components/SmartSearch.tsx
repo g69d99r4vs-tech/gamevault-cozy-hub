@@ -58,7 +58,7 @@ export function SmartSearch() {
             id: parseInt(item.steamAppID),
             name: item.external,
             background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.steamAppID}/header.jpg`,
-            fallback_image: item.thumb, // صورة احتياطية لو خربت الأساسية
+            fallback_image: item.thumb,
             steamPrice: item.cheapest,
             steamAppID: item.steamAppID,
           })) as SteamGame[];
@@ -152,40 +152,40 @@ export function SmartSearch() {
           {data?.map((g) => (
             <div
               key={g.id}
-              className="group flex cursor-pointer items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-secondary/60"
+              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-2 transition-colors hover:bg-secondary/60"
               onClick={() => pick(g)}
             >
+              {/* الاسم والسعر صاروا على اليسار وبأخذون المساحة كاملة */}
+              <div className="min-w-0 flex-1 space-y-1 pr-2">
+                <p className="text-sm font-semibold leading-snug line-clamp-2">
+                  <bdi>{g.name}</bdi>
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  {g.steamPrice ? (
+                    <span className="text-[12px] font-bold text-green-400">
+                      ${g.steamPrice}
+                    </span>
+                  ) : (
+                    <span className="text-[12px] font-bold text-muted-foreground">
+                      مجانية
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground">· متجر Steam</span>
+                </div>
+              </div>
+
+              {/* الصورة صارت على اليمين بمقاس مستطيل ثابت */}
               <div className="relative shrink-0">
                 <img
                   src={g.background_image}
                   alt={g.name}
                   loading="lazy"
                   onError={(e) => {
-                    // إذا الصورة العريضة مو متوفرة، يستخدم الصغيرة تلقائياً
                     e.currentTarget.src = g.fallback_image;
                   }}
-                  // غيرنا المقاس هنا عشان تصير مستطيلة وعريضة
-                  className="w-28 h-14 rounded-lg object-cover" 
+                  className="w-24 h-14 rounded-lg object-cover" 
                 />
-              </div>
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="text-sm font-semibold leading-snug break-words line-clamp-2">
-                  <bdi>{g.name}</bdi>
-                </p>
-                
-                {g.steamPrice ? (
-                  <p className="text-[12px] font-bold text-green-400 line-clamp-1">
-                    ${g.steamPrice}
-                  </p>
-                ) : (
-                  <p className="text-[12px] font-bold text-muted-foreground line-clamp-1">
-                    مجانية
-                  </p>
-                )}
-
-                <p className="text-[11px] text-muted-foreground line-clamp-1">
-                  متجر Steam
-                </p>
               </div>
 
               <div className="hidden shrink-0 gap-1 group-hover:flex md:flex">
