@@ -140,7 +140,7 @@ export function SmartSearch() {
           {!data && isFetching && (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-2xl bg-secondary/60" />
+                <div key={i} className="h-14 animate-pulse rounded-2xl bg-secondary/60" />
               ))}
             </div>
           )}
@@ -152,10 +152,10 @@ export function SmartSearch() {
           {data?.map((g) => (
             <div
               key={g.id}
-              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/60 mb-1"
+              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-2.5 transition-colors hover:bg-secondary/60 mb-1"
               onClick={() => pick(g)}
             >
-              {/* 1. الصورة ثابتة على اليسار */}
+              {/* 1. الصورة صارت صغيرة ومرتبة على اليسار بدون ما تغطي شي */}
               <div className="relative shrink-0">
                 <img
                   src={g.background_image}
@@ -164,13 +164,13 @@ export function SmartSearch() {
                   onError={(e) => {
                     e.currentTarget.src = g.fallback_image;
                   }}
-                  className="w-28 h-16 rounded-xl object-cover shadow-md" 
+                  className="w-14 h-14 rounded-xl object-cover shadow-sm" 
                 />
               </div>
 
-              {/* 2. اسم اللعبة والتفاصيل في الوسط تأخذ المساحة المتبقية بأمان تامة */}
+              {/* 2. مساحة الكتابة واسعة وأخذت كامل راحتها */}
               <div className="min-w-0 flex-1 space-y-1 text-right px-2">
-                <p className="text-sm font-bold leading-snug truncate text-foreground">
+                <p className="text-sm font-bold leading-snug line-clamp-2 text-foreground">
                   {g.name}
                 </p>
                 
