@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Search, Loader2, Plus } from "lucide-react";
+import { Search, Loader2, Plus, X } from "lucide-react";
 import { useStore, type Status } from "@/lib/store";
 import { buzz } from "@/lib/haptics";
 import { toast } from "sonner";
@@ -11,12 +11,12 @@ export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : "" }),
   head: () => ({
     meta: [
-      { title: "بحث الألعاب — Steam & GameHub" },
+      { title: "بحث الألعاب -- Steam & GameHub" },
       {
         name: "description",
         content: "ابحث في ألعاب متجر ستيم وتتبعها مع الأسعار المباشرة.",
       },
-      { property: "og:title", content: "بحث الألعاب — GameHub" },
+      { property: "og:title", content: "بحث الألعاب -- GameHub" },
       { property: "og:description", content: "نتائج بحث فورية من متجر ستيم بأسعارها." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -95,22 +95,40 @@ function SearchPage() {
 
   return (
     <div className="space-y-6 pb-24">
+      {/* صندوق البحث المربع (ستايل ستيم) */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           navigate({ to: "/search", search: { q: term.trim() } });
         }}
-        className="flex items-center gap-2 rounded-2xl glass px-4 py-3"
+        className="flex items-center gap-2 bg-[#2a475e] p-2 rounded-md shadow-md border border-blue-500/30"
       >
-        <Search className="size-4 shrink-0 text-muted-foreground" />
+        <button type="submit" className="text-muted-foreground hover:text-white p-1">
+          <Search className="size-5 shrink-0" />
+        </button>
         <input
           autoFocus
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           placeholder="ابحث عن أي لعبة في ستيم..."
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          className="w-full bg-[#171a21] text-white px-3 py-2 text-sm outline-none rounded border border-gray-700 focus:border-blue-500 placeholder:text-muted-foreground"
         />
-        {isFetching && <Loader2 className="size-4 animate-spin text-primary" />}
+        {term && (
+          <button
+            type="button"
+            onClick={() => {
+              setTerm("");
+              navigate({ to: "/search", search: { q: "" } });
+            }}
+            className="text-gray-400 hover:text-white p-1"
+          >
+            <X className="size-5" />
+          </button>
+        )}
+        {isFetching && <Loader2 className="size-5 animate-spin text-primary" />}
+        <div className="bg-[#171a21] border border-gray-600 w-10 h-10 rounded flex items-center justify-center text-lg font-bold text-white shrink-0">
+          ?
+        </div>
       </form>
 
       <div className="flex items-baseline justify-between">
@@ -121,7 +139,7 @@ function SearchPage() {
       </div>
 
       {q.trim().length < 2 && (
-        <p className="rounded-3xl border border-border p-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
           اكتب حرفين على الأقل لبدء البحث في متجر ستيم
         </p>
       )}
@@ -129,34 +147,32 @@ function SearchPage() {
       {!data && q.trim().length >= 2 && (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-secondary/60" />
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-secondary/60" />
           ))}
         </div>
       )}
 
       {data?.length === 0 && !isFetching && (
-        <p className="rounded-3xl border border-border p-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
           لا توجد نتائج مطابقة في ستيم
         </p>
       )}
 
-      {/* تصميم البطاقات العريضة (ستايل ستيم الاحترافي) */}
+      {/* تصميم البطاقات العريضة */}
       <div className="space-y-3">
         {data?.map((game) => {
           const hasDiscount = game.savings > 0;
           return (
             <div
               key={game.id}
-              className="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 glass p-3.5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all"
+              className="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 glass p-3.5 rounded-xl border border-white/5 hover:border-primary/30 transition-all"
             >
-              {/* رابط يوديك لصفحة تفاصيل اللعبة */}
               <Link
                 to="/game/$id"
                 params={{ id: String(game.id) }}
                 className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1 min-w-0"
               >
-                {/* الصورة العريضة */}
-                <div className="relative shrink-0 overflow-hidden rounded-xl bg-black/40">
+                <div className="relative shrink-0 overflow-hidden rounded-lg bg-black/40">
                   <img
                     src={game.headerImage}
                     alt={game.name}
@@ -168,7 +184,6 @@ function SearchPage() {
                   />
                 </div>
 
-                {/* الاسم والسعر */}
                 <div className="flex-1 min-w-0 space-y-1.5 text-right">
                   <h2 className="text-base font-bold text-foreground truncate">
                     {game.name}
@@ -177,7 +192,7 @@ function SearchPage() {
                   <div className="flex items-center gap-3 flex-wrap">
                     {hasDiscount ? (
                       <>
-                        <span className="bg-emerald-500/20 text-emerald-400 font-bold text-xs px-2 py-1 rounded-lg">
+                        <span className="bg-[#4c6b22] text-[#beee11] font-bold text-xs px-2 py-0.5 rounded">
                           -{game.savings}%
                         </span>
                         <span className="text-xs text-muted-foreground line-through">
@@ -199,14 +214,13 @@ function SearchPage() {
                 </div>
               </Link>
 
-              {/* أزرار الإضافة السريعة */}
               <div className="flex items-center gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5 justify-end">
                 {quickAdd.map((a) => (
                   <Button
                     key={a.status}
                     size="sm"
                     variant="secondary"
-                    className="h-8 rounded-xl px-3 text-xs font-medium bg-secondary/80 hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="h-8 rounded-lg px-3 text-xs font-medium bg-secondary/80 hover:bg-primary hover:text-primary-foreground transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       add(game, a.status);
