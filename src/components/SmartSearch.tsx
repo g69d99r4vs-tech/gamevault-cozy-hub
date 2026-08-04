@@ -2,22 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Search, Plus, Loader2 } from "lucide-react";
-import { searchGames, isUnreleased, type RawgGame } from "@/lib/rawg";
 import { useStore, type Status } from "@/lib/store";
 import { buzz } from "@/lib/haptics";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GameEditDialog } from "@/components/GameEditDialog";
 
-export type GameWithPrice = RawgGame & {
-  steamPrice?: string | null;
-  steamAppID?: string | null;
+// نوع البيانات الجديد المتوافق مع Steam
+export type SteamSearchResult = {
+  id: number;
+  name: string;
+  background_image: string;
+  steamPrice: string | null;
+  metacritic?: number | null;
 };
 
 const quickAdd: { status: Status; label: string }[] = [
   { status: "current", label: "قيد اللعب" },
   { status: "backlog", label: "الانتظار" },
-  { status: "hype", label: "المرتقبة" },
   { status: "completed", label: "مكتملة" },
 ];
 
@@ -34,48 +36,36 @@ export function SmartSearch() {
   );
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(q.trim()), 160);
+    const t = setTimeout(() => setDebounced(q.trim()), 300); // زدنا الوقت شوي عشان ما نضغط سيرفرات ستيم
     return () => clearTimeout(t);
   }, [q]);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["search", debounced],
+    queryKey: ["steam-search", debounced],
     queryFn: async () => {
+      if (debounced.length < 2) return [];
+
       try {
-        // 1. نجيب الألعاب الأساسية من مصدرها
-        const games = await searchGames(debounced, 14);
+        // نستخدم بروكسي لتجاوز حظر ستيم للمتصفحات (CORS Error)
+        const targetUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(debounced)}&l=english&cc=US`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+        const res = await fetch(proxyUrl);
+        if (!res.ok) return [];
         
-        // حماية 1: التأكد من وجود ألعاب فعلاً
-        if (!games || !Array.isArray(games)) return [];
+        const json = await res.json();
+        if (!json.items || !Array.isArray(json.items)) return [];
 
-        // 2. محاولة جلب الأسعار بأمان تام
-        try {
-          const priceRes = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${debounced}&limit=14`);
-          
-          if (!priceRes.ok) return games as GameWithPrice[];
-          
-          const priceData = await priceRes.json();
-          
-          // حماية 2: التأكد إن الـ API رجع مصفوفة وليس رسالة خطأ أو حظر
-          if (!Array.isArray(priceData)) return games as GameWithPrice[];
-
-          return games.map((game) => {
-            const matched = priceData.find((p: any) =>
-              game.name?.toLowerCase().includes(p.external?.toLowerCase()) ||
-              p.external?.toLowerCase().includes(game.name?.toLowerCase())
-            );
-            return {
-              ...game,
-              steamPrice: matched?.cheapest || null,
-              steamAppID: matched?.steamAppID || null,
-            } as GameWithPrice;
-          });
-        } catch (priceErr) {
-          // إذا فشل جلب السعر لأي سبب، نرجع الألعاب طبيعي بدون سعر
-          return games as GameWithPrice[];
-        }
-      } catch (mainErr) {
-        console.error("خطأ في البحث الأساسي:", mainErr);
+        // ترتيب البيانات بالشكل اللي يفهمه تصميم موقعك
+        return json.items.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          background_image: item.tiny_image, // صورة ستيم المصغرة
+          steamPrice: item.price ? (item.price.final / 100).toFixed(2) : null,
+          metacritic: item.metascore || null,
+        })) as SteamSearchResult[];
+      } catch (err) {
+        console.error("Steam Search Error:", err);
         return [];
       }
     },
@@ -92,9 +82,10 @@ export function SmartSearch() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const pick = (g: GameWithPrice) => {
+  const pick = (g: SteamSearchResult) => {
     setOpen(false);
     setQ("");
+    // هذا السطر يضمن إنك تبقى في موقعك ويرسلك لصفحة اللعبة الداخلية
     navigate({ to: "/game/$id", params: { id: String(g.id) } });
   };
 
@@ -105,9 +96,11 @@ export function SmartSearch() {
     navigate({ to: "/search", search: { q: term } });
   };
 
-  const add = (g: GameWithPrice, status: Status) => {
+  // حولنا g إلى any مؤقتاً لتوافق متجر البيانات القديم
+  const add = (g: SteamSearchResult, status: Status) => {
     buzz(status === "completed" ? [40, 60, 40] : 20);
-    addGame(g, status);
+    // دمج وهمي لبعض الحقول لتجنب أخطاء المتجر القديم
+    addGame({ ...g, released: "Steam", genres: [] } as any, status);
     setOpen(false);
     setQ("");
     if (status === "completed") setEditId(g.id);
@@ -141,7 +134,7 @@ export function SmartSearch() {
           }}
           enterKeyHint="search"
           type="search"
-          placeholder="ابحث عن أي لعبة… اكتب حرفين فقط"
+          placeholder="ابحث عن أي لعبة في ستيم..."
           className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
         />
         {isFetching && <Loader2 className="size-4 animate-spin text-primary" />}
@@ -149,16 +142,15 @@ export function SmartSearch() {
 
       {open && q.trim().length >= 2 && (
         <div className="absolute inset-x-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-3xl glass p-2">
-          {!data && (
+          {!data && isFetching && (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-20 animate-pulse rounded-2xl bg-secondary/60" />
               ))}
             </div>
           )}
-          {/* حماية 3: ما تطلع رسالة لا توجد نتائج إلا إذا خلص تحميل فعلاً */}
           {data?.length === 0 && !isFetching && (
-            <p className="p-4 text-center text-sm text-muted-foreground">لا توجد نتائج</p>
+            <p className="p-4 text-center text-sm text-muted-foreground">لا توجد نتائج في ستيم</p>
           )}
           {data?.map((g) => (
             <div
@@ -173,39 +165,30 @@ export function SmartSearch() {
                   loading="lazy"
                   className="size-16 rounded-xl object-cover"
                 />
-                {isUnreleased(g) && (
-                  <span className="absolute -bottom-1 right-1 rounded-full bg-accent px-1.5 py-0.5 text-[9px] font-bold text-accent-foreground">
-                    قريبًا
-                  </span>
-                )}
               </div>
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p className="text-sm font-semibold leading-snug break-words line-clamp-2">
                   <bdi>{g.name}</bdi>
                 </p>
-                <p className="text-xs text-muted-foreground line-clamp-1">
-                  {isUnreleased(g) ? (g.released ?? "بلا تاريخ") : (g.released?.slice(0, 4) ?? "—")} ·{" "}
-                  {(g.genres ?? []).map((x) => x.name).join("، ")}
-                </p>
                 
-                {g.steamPrice && (
+                {g.steamPrice ? (
                   <p className="text-[12px] font-bold text-green-400 line-clamp-1">
-                    السعر في ستيم: ${g.steamPrice}
+                    السعر: ${g.steamPrice}
+                  </p>
+                ) : (
+                  <p className="text-[12px] font-bold text-muted-foreground line-clamp-1">
+                    مجانية أو غير متوفرة
                   </p>
                 )}
 
                 <p className="text-[11px] text-muted-foreground line-clamp-1">
-                  {g.developers?.[0]?.name ?? ""}
+                  متجر Steam
                   {g.metacritic ? ` · ميتاكريتيك ${g.metacritic}` : ""}
-                  {g.rating ? ` · ★ ${g.rating}` : ""}
                 </p>
               </div>
 
               <div className="hidden shrink-0 gap-1 group-hover:flex md:flex">
-                {(isUnreleased(g)
-                  ? quickAdd.filter((a) => a.status === "hype")
-                  : quickAdd.filter((a) => a.status !== "hype")
-                ).map((a) => (
+                {quickAdd.map((a) => (
                   <Button
                     key={a.status}
                     size="sm"
@@ -223,15 +206,6 @@ export function SmartSearch() {
               </div>
             </div>
           ))}
-          {!!data?.length && (
-            <button
-              type="button"
-              onClick={submit}
-              className="mt-1 w-full rounded-2xl bg-primary/12 px-4 py-2.5 text-center text-sm font-bold text-primary transition-colors hover:bg-primary/20"
-            >
-              عرض كل النتائج لـ «{q.trim()}»
-            </button>
-          )}
         </div>
       )}
     </div>
