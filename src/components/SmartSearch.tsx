@@ -152,42 +152,10 @@ export function SmartSearch() {
           {data?.map((g) => (
             <div
               key={g.id}
-              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-2 transition-colors hover:bg-secondary/60"
+              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl p-2.5 transition-colors hover:bg-secondary/60 text-right"
               onClick={() => pick(g)}
             >
-              {/* الاسم والسعر صاروا على اليسار وبأخذون المساحة كاملة */}
-              <div className="min-w-0 flex-1 space-y-1 pr-2">
-                <p className="text-sm font-semibold leading-snug line-clamp-2">
-                  <bdi>{g.name}</bdi>
-                </p>
-                
-                <div className="flex items-center gap-2">
-                  {g.steamPrice ? (
-                    <span className="text-[12px] font-bold text-green-400">
-                      ${g.steamPrice}
-                    </span>
-                  ) : (
-                    <span className="text-[12px] font-bold text-muted-foreground">
-                      مجانية
-                    </span>
-                  )}
-                  <span className="text-[10px] text-muted-foreground">· متجر Steam</span>
-                </div>
-              </div>
-
-              {/* الصورة صارت على اليمين بمقاس مستطيل ثابت */}
-              <div className="relative shrink-0">
-                <img
-                  src={g.background_image}
-                  alt={g.name}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = g.fallback_image;
-                  }}
-                  className="w-24 h-14 rounded-lg object-cover" 
-                />
-              </div>
-
+              {/* أزرار الإضافة السريعة */}
               <div className="hidden shrink-0 gap-1 group-hover:flex md:flex">
                 {quickAdd.map((a) => (
                   <Button
@@ -204,6 +172,39 @@ export function SmartSearch() {
                     {a.label}
                   </Button>
                 ))}
+              </div>
+
+              {/* تفاصيل اللعبة (الاسم والسعر) تأخذ المساحة المتبقية بمرونة */}
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-sm font-bold leading-tight truncate text-foreground">
+                  {g.name}
+                </p>
+                
+                <div className="flex items-center gap-2 justify-start">
+                  {g.steamPrice ? (
+                    <span className="text-xs font-bold text-green-400">
+                      ${g.steamPrice}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold text-muted-foreground">
+                      مجانية
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground">· Steam</span>
+                </div>
+              </div>
+
+              {/* الصورة على اليمين بمقاس ثابت ومستطيل */}
+              <div className="relative shrink-0">
+                <img
+                  src={g.background_image}
+                  alt={g.name}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = g.fallback_image;
+                  }}
+                  className="w-24 h-14 rounded-lg object-cover shadow-sm" 
+                />
               </div>
             </div>
           ))}
