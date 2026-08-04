@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GameEditDialog } from "@/components/GameEditDialog";
 
-// دمجنا نوع جديد عشان يستقبل السعر من ستيم
 export type GameWithPrice = RawgGame & {
   steamPrice?: string | null;
   steamAppID?: string | null;
@@ -42,28 +41,42 @@ export function SmartSearch() {
   const { data, isFetching } = useQuery({
     queryKey: ["search", debounced],
     queryFn: async () => {
-      // 1. نجيب الألعاب من مصدرها الأصلي عشان الصور والتفاصيل
-      const games = await searchGames(debounced, 14);
-
-      // 2. نجيب الأسعار من ستيم عبر وسيط لتفادي مشاكل الـ CORS
       try {
-        const priceRes = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${debounced}&limit=14`);
-        const priceData = await priceRes.json();
+        // 1. نجيب الألعاب الأساسية من مصدرها
+        const games = await searchGames(debounced, 14);
+        
+        // حماية 1: التأكد من وجود ألعاب فعلاً
+        if (!games || !Array.isArray(games)) return [];
 
-        // 3. ندمج السعر مع اللعبة المطابقة
-        return games.map((game) => {
-          const matched = priceData.find((p: any) =>
-            game.name.toLowerCase().includes(p.external.toLowerCase()) ||
-            p.external.toLowerCase().includes(game.name.toLowerCase())
-          );
-          return {
-            ...game,
-            steamPrice: matched?.cheapest || null,
-            steamAppID: matched?.steamAppID || null,
-          } as GameWithPrice;
-        });
-      } catch (err) {
-        return games as GameWithPrice[]; // في حال فشل جلب السعر، ترجع الألعاب طبيعي
+        // 2. محاولة جلب الأسعار بأمان تام
+        try {
+          const priceRes = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${debounced}&limit=14`);
+          
+          if (!priceRes.ok) return games as GameWithPrice[];
+          
+          const priceData = await priceRes.json();
+          
+          // حماية 2: التأكد إن الـ API رجع مصفوفة وليس رسالة خطأ أو حظر
+          if (!Array.isArray(priceData)) return games as GameWithPrice[];
+
+          return games.map((game) => {
+            const matched = priceData.find((p: any) =>
+              game.name?.toLowerCase().includes(p.external?.toLowerCase()) ||
+              p.external?.toLowerCase().includes(game.name?.toLowerCase())
+            );
+            return {
+              ...game,
+              steamPrice: matched?.cheapest || null,
+              steamAppID: matched?.steamAppID || null,
+            } as GameWithPrice;
+          });
+        } catch (priceErr) {
+          // إذا فشل جلب السعر لأي سبب، نرجع الألعاب طبيعي بدون سعر
+          return games as GameWithPrice[];
+        }
+      } catch (mainErr) {
+        console.error("خطأ في البحث الأساسي:", mainErr);
+        return [];
       }
     },
     enabled: debounced.length >= 2,
@@ -143,7 +156,8 @@ export function SmartSearch() {
               ))}
             </div>
           )}
-          {data?.length === 0 && (
+          {/* حماية 3: ما تطلع رسالة لا توجد نتائج إلا إذا خلص تحميل فعلاً */}
+          {data?.length === 0 && !isFetching && (
             <p className="p-4 text-center text-sm text-muted-foreground">لا توجد نتائج</p>
           )}
           {data?.map((g) => (
@@ -174,7 +188,6 @@ export function SmartSearch() {
                   {(g.genres ?? []).map((x) => x.name).join("، ")}
                 </p>
                 
-                {/* هنا تم إضافة السعر باللون الأخضر ليكون بارزاً */}
                 {g.steamPrice && (
                   <p className="text-[12px] font-bold text-green-400 line-clamp-1">
                     السعر في ستيم: ${g.steamPrice}
