@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { gregorian, hijri } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { useStore, type GameEntry, type Status } from "@/lib/store";
 import { GameEditDialog } from "@/components/GameEditDialog";
@@ -38,35 +37,32 @@ function GamePage() {
     (s) => s.users[s.currentUser].entries.find((e) => e.id === Number(id)) ?? null,
   );
 
-  // جلب تفاصيل اللعبة مباشرة من متجر ستيم باستخدام رقم الـ ID
+  // جلب تفاصيل اللعبة وأسعارها وصورها عبر CheapShark الآمن والمستقر
   const { data: game, isLoading } = useQuery({
-    queryKey: ["steam-game-details", id],
+    queryKey: ["steam-game-cheapshark", id],
     queryFn: async () => {
       try {
-        const res = await fetch(`https://store.steampowered.com/api/appdetails?appids=${id}&l=arabic`);
+        const res = await fetch(`https://www.cheapshark.com/api/1.0/games?id=${id}`);
         if (!res.ok) return null;
         const json = await res.json();
-        const appData = json[id];
-        if (!appData || !appData.success) return null;
+        
+        if (!json || !json.info) return null;
 
-        const details = appData.data;
+        const info = json.info;
+        const cheapestDeal = json.deals?.[0];
+
         return {
           id: Number(id),
-          name: details.name,
-          description: details.short_description || "",
-          background_image: details.header_image || details.background,
-          released: details.release_date?.date || "متوفر",
-          website: details.website || `https://store.steampowered.com/app/${id}`,
-          developers: details.developers || [],
-          genres: (details.genres || []).map((g: any) => ({ id: g.id, name: g.description })),
-          priceOverview: details.price_overview ? {
-            finalFormatted: details.price_overview.final_formatted,
-            discountPercent: details.price_overview.discount_percent,
-          } : null,
-          screenshots: (details.screenshots || []).map((s: any) => s.path_full) as string[],
+          name: info.name || entry?.name || "لعبة ستيم",
+          background_image: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}/header.jpg`,
+          fallback_image: info.thumb || "",
+          website: `https://store.steampowered.com/app/${id}`,
+          price: cheapestDeal?.price || null,
+          retailPrice: cheapestDeal?.retailPrice || null,
+          dealsCount: json.deals?.length || 0,
         };
       } catch (err) {
-        console.error("Steam Details Error:", err);
+        console.error("Game Details Error:", err);
         return null;
       }
     },
@@ -89,7 +85,7 @@ function GamePage() {
           <bdi>{entry?.name ?? "اللعبة"}</bdi>
         </p>
         <p className="text-sm text-muted-foreground">
-          تعذر جلب تفاصيل هذه اللعبة من سيرفرات ستيم مباشرة. جرّب البحث عنها من جديد.
+          تعذر جلب تفاصيل هذه اللعبة. جرّب البحث عنها من جديد.
         </p>
         <Button asChild className="rounded-xl">
           <Link to="/search" search={{ q: entry?.name ?? "" }}>
@@ -142,35 +138,31 @@ function GamePage() {
         animate={{ opacity: 1 }}
         className="relative overflow-hidden rounded-[2rem] border border-border"
       >
-        {game.background_image && (
-          <img
-            src={game.background_image}
-            alt={game.name}
-            className="absolute inset-0 size-full object-cover opacity-40"
-          />
-        )}
+        <img
+          src={game.background_image}
+          alt={game.name}
+          onError={(e) => {
+            e.currentTarget.src = game.fallback_image;
+          }}
+          className="absolute inset-0 size-full object-cover opacity-40"
+        />
         <div className="relative bg-gradient-to-t from-card via-card/70 to-transparent p-6 pt-40 md:p-10 md:pt-56 space-y-4">
           <h1 className="font-display text-3xl font-black md:text-5xl">{game.name}</h1>
           
           <div className="flex flex-wrap items-center gap-2">
-            {(game.genres ?? []).map((g: any) => (
-              <span
-                key={g.id}
-                className="rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold text-muted-foreground backdrop-blur"
-              >
-                {g.name}
-              </span>
-            ))}
-            {game.priceOverview && (
+            <span className="rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold text-muted-foreground backdrop-blur">
+              متجر Steam
+            </span>
+            {game.price ? (
               <span className="rounded-full bg-emerald-500/20 px-3.5 py-1 text-xs font-extrabold text-emerald-400">
-                {game.priceOverview.finalFormatted}
+                ${game.price}
+              </span>
+            ) : (
+              <span className="rounded-full bg-secondary/80 px-3.5 py-1 text-xs font-extrabold text-muted-foreground">
+                مجانية أو غير متوفرة
               </span>
             )}
           </div>
-
-          <p className="text-sm text-muted-foreground">
-            تاريخ الإصدار: {game.released} {game.developers.length > 0 ? `· المطور: ${game.developers.join(", ")}` : ""}
-          </p>
 
           {/* أزرار التتبع والموقع الرسمي */}
           <div className="flex flex-wrap gap-2 pt-2">
@@ -186,9 +178,9 @@ function GamePage() {
                     id: game.id,
                     name: game.name,
                     background_image: game.background_image,
-                    released: game.released,
-                    genres: game.genres,
-                    developers: game.developers,
+                    released: "Steam",
+                    genres: [],
+                    developers: [],
                   } as any, o.v);
                   if (o.v === "completed") setEditing(true);
                   else toast.success(`أُضيفت إلى ${o.l}`);
@@ -214,14 +206,6 @@ function GamePage() {
         </div>
       </motion.section>
 
-      {/* نبذة عن اللعبة */}
-      {game.description && (
-        <section className="rounded-3xl border border-border bg-card p-6 space-y-2">
-          <h2 className="font-display text-lg font-bold">عن اللعبة</h2>
-          <p className="text-sm leading-7 text-muted-foreground" dangerouslySetInnerHTML={{ __html: game.description }} />
-        </section>
-      )}
-
       {/* بطاقة الختم إذا كانت مكتملة */}
       {entry?.status === "completed" && (
         <section className="rounded-3xl border border-border bg-card p-6">
@@ -240,25 +224,6 @@ function GamePage() {
               {entry.notes}
             </p>
           )}
-        </section>
-      )}
-
-      {/* صور اللعبة من ستيم */}
-      {!!game.screenshots?.length && (
-        <section className="space-y-3">
-          <h2 className="font-display text-lg font-bold">الصور</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {game.screenshots.slice(0, 6).map((imgUrl: string, i: number) => (
-              <div key={i} className="overflow-hidden rounded-2xl border border-border bg-card">
-                <img
-                  src={imgUrl}
-                  alt={game.name}
-                  loading="lazy"
-                  className="aspect-video w-full object-cover transition-transform duration-500 hover:scale-105"
-                />
-              </div>
-            ))}
-          </div>
         </section>
       )}
     </div>
