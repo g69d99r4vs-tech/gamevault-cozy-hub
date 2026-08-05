@@ -2,39 +2,31 @@ import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Search, Loader2, Plus, X } from "lucide-react";
+import { searchGames, type RawgGame } from "@/lib/rawg";
 import { useStore, type Status } from "@/lib/store";
 import { buzz } from "@/lib/haptics";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { GameEditDialog } from "@/components/GameEditDialog";
 
 export const Route = createFileRoute("/search")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? (s["q"] as string) : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    q: typeof s["q"] === "string" ? (s["q"] as string) : "",
+  }),
   head: () => ({
     meta: [
-      { title: "بحث الألعاب -- Steam & GameHub" },
+      { title: "بحث ألعاب ستيم -- GameHub" },
       {
         name: "description",
-        content: "ابحث في ألعاب متجر ستيم وتتبعها مع الأسعار المباشرة.",
+        content: "ابحث في متجر ستيم واعرف السعر الحالي لكل لعبة وأضفها لمكتبتك فورًا.",
       },
-      { property: "og:title", content: "بحث الألعاب -- GameHub" },
-      { property: "og:description", content: "نتائج بحث فورية من متجر ستيم بأسعارها." },
+      { property: "og:title", content: "بحث ألعاب ستيم -- GameHub" },
+      { property: "og:description", content: "نتائج بحث فورية من متجر ستيم مع الأسعار." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: SearchPage,
 });
-
-type SteamSearchResult = {
-  id: number;
-  name: string;
-  thumb: string;
-  headerImage: string;
-  cheapest: string;
-  normalPrice: string;
-  savings: number;
-  steamAppID: string;
-};
 
 const quickAdd: { status: Status; label: string }[] = [
   { status: "current", label: "قيد اللعب" },
@@ -46,75 +38,40 @@ function SearchPage() {
   const { q } = Route.useSearch();
   const navigate = useNavigate();
   const [term, setTerm] = useState(q);
-  
-  // حالة التحكم في فتح نافذة التعديل والخصائص عند الضغط على زر الحالة
-  const [selectedGameForEdit, setSelectedGameForEdit] = useState<{ game: any; initialStatus: Status } | null>(null);
+  const addGame = useStore((s) => s.addGame);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["search-full-steam", q],
-    queryFn: async () => {
-      if (!q || q.trim().length < 2) return [];
-      try {
-        const res = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(q)}&limit=30`);
-        if (!res.ok) return [];
-        const json = await res.json();
-        if (!Array.isArray(json)) return [];
-
-        return json
-          .filter((item) => item.steamAppID)
-          .map((item) => ({
-            id: parseInt(item.steamAppID),
-            name: item.external,
-            thumb: item.thumb,
-            headerImage: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.steamAppID}/header.jpg`,
-            cheapest: item.cheapest,
-            normalPrice: item.normalPrice || item.cheapest,
-            savings: item.savings ? Math.round(parseFloat(item.savings)) : 0,
-            steamAppID: item.steamAppID,
-          })) as SteamSearchResult[];
-      } catch (err) {
-        console.error("Full Search Error:", err);
-        return [];
-      }
-    },
+    queryKey: ["steam-search", q],
+    queryFn: () => searchGames(q, 40),
     enabled: q.trim().length >= 2,
     staleTime: 1000 * 60 * 10,
     placeholderData: keepPreviousData,
   });
 
-  const handleOpenEdit = (game: SteamSearchResult, status: Status) => {
+  const add = (g: RawgGame, status: Status) => {
     buzz(20);
-    // تجهيز اللعبة بالبيانات المتوافقة مع نظام الهيكل وتفعيل النافذة المنبثقة
-    const formattedGame = {
-      id: game.id,
-      name: game.name,
-      background_image: game.headerImage,
-      released: "Steam",
-      genres: [],
-      developers: [],
-    };
-    setSelectedGameForEdit({ game: formattedGame, initialStatus: status });
+    addGame(g, status);
+    toast.success(`أُضيفت ${g.name}`);
   };
 
   return (
     <div className="space-y-6 pb-24">
-      {/* صندوق البحث المربع (ستايل ستيم) */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           navigate({ to: "/search", search: { q: term.trim() } });
         }}
-        className="flex items-center gap-2 bg-[#2a475e] p-2 rounded-md shadow-md border border-blue-500/30"
+        className="flex items-center gap-2 rounded-2xl border border-border bg-secondary/60 p-2 backdrop-blur"
       >
-        <button type="submit" className="text-muted-foreground hover:text-white p-1">
+        <button type="submit" className="p-1 text-muted-foreground hover:text-foreground">
           <Search className="size-5 shrink-0" />
         </button>
         <input
           autoFocus
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="ابحث عن أي لعبة في ستيم..."
-          className="w-full bg-[#171a21] text-white px-3 py-2 text-sm outline-none rounded border border-gray-700 focus:border-blue-500 placeholder:text-muted-foreground"
+          placeholder="ابحث عن أي لعبة في ستيم…"
+          className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
         />
         {term && (
           <button
@@ -123,15 +80,12 @@ function SearchPage() {
               setTerm("");
               navigate({ to: "/search", search: { q: "" } });
             }}
-            className="text-gray-400 hover:text-white p-1"
+            className="p-1 text-muted-foreground hover:text-foreground"
           >
             <X className="size-5" />
           </button>
         )}
         {isFetching && <Loader2 className="size-5 animate-spin text-primary" />}
-        <div className="bg-[#171a21] border border-gray-600 w-10 h-10 rounded flex items-center justify-center text-lg font-bold text-white shrink-0">
-          ?
-        </div>
       </form>
 
       <div className="flex items-baseline justify-between">
@@ -143,7 +97,7 @@ function SearchPage() {
 
       {q.trim().length < 2 && (
         <p className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
-          اكتب حرفين على الأقل لبدء البحث في متجر ستيم
+          اكتب حرفين على الأقل لبدء البحث
         </p>
       )}
 
@@ -155,99 +109,69 @@ function SearchPage() {
         </div>
       )}
 
-      {data?.length === 0 && !isFetching && (
+      {data?.length === 0 && (
         <p className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
-          لا توجد نتائج مطابقة في ستيم
+          لا توجد نتائج مطابقة
         </p>
       )}
 
-      {/* تصميم البطاقات العريضة */}
       <div className="space-y-3">
-        {data?.map((game) => {
-          const hasDiscount = game.savings > 0;
-          return (
-            <div
-              key={game.id}
-              className="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 glass p-3.5 rounded-xl border border-white/5 hover:border-primary/30 transition-all"
+        {data?.map((g) => (
+          <div
+            key={g.id}
+            className="group glass flex flex-col items-stretch justify-between gap-4 rounded-xl border border-white/5 p-3.5 transition-all hover:border-primary/30 sm:flex-row sm:items-center"
+          >
+            <Link
+              to="/game/$id"
+              params={{ id: String(g.id) }}
+              className="flex min-w-0 flex-1 flex-col items-stretch gap-4 sm:flex-row sm:items-center"
             >
-              <Link
-                to="/game/$id"
-                params={{ id: String(game.id) }}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1 min-w-0"
-              >
-                <div className="relative shrink-0 overflow-hidden rounded-lg bg-black/40">
-                  <img
-                    src={game.headerImage}
-                    alt={game.name}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = game.thumb;
-                    }}
-                    className="w-full sm:w-44 h-24 object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="flex-1 min-w-0 space-y-1.5 text-right">
-                  <h2 className="text-base font-bold text-foreground truncate">
-                    {game.name}
-                  </h2>
-
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {hasDiscount ? (
-                      <>
-                        <span className="bg-[#4c6b22] text-[#beee11] font-bold text-xs px-2 py-0.5 rounded">
-                          -{game.savings}%
-                        </span>
-                        <span className="text-xs text-muted-foreground line-through">
-                          ${game.normalPrice}
-                        </span>
-                        <span className="text-sm font-extrabold text-foreground">
-                          ${game.cheapest}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-sm font-extrabold text-foreground">
-                        {game.cheapest && parseFloat(game.cheapest) > 0 ? `$${game.cheapest}` : "مجانية"}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded bg-secondary/60">
-                      Steam Store
-                    </span>
-                  </div>
-                </div>
-              </Link>
-
-              <div className="flex items-center gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5 justify-end">
-                {quickAdd.map((a) => (
-                  <Button
-                    key={a.status}
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 rounded-lg px-3 text-xs font-medium bg-secondary/80 hover:bg-primary hover:text-primary-foreground transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenEdit(game, a.status);
-                    }}
-                  >
-                    <Plus className="size-3.5 ml-1" />
-                    {a.label}
-                  </Button>
-                ))}
+              <div className="relative shrink-0 overflow-hidden rounded-lg bg-black/40">
+                <img
+                  src={g.background_image ?? ""}
+                  alt={g.name}
+                  loading="lazy"
+                  className="h-24 w-full object-cover transition-transform duration-300 group-hover:scale-105 sm:w-44"
+                />
+                {!!g.metacritic && (
+                  <span className="absolute left-2 top-2 rounded bg-primary/90 px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                    {g.metacritic}
+                  </span>
+                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
 
-      {/* نافذة التعديل المنبثقة تفتح تلقائياً عند الضغط على أي حالة */}
-      {selectedGameForEdit && (
-        <GameEditDialog
-          game={selectedGameForEdit.game}
-          initialStatus={selectedGameForEdit.initialStatus}
-          open={!!selectedGameForEdit}
-          onOpenChange={(open) => !open && setSelectedGameForEdit(null)}
-        />
-      )}
+              <div className="min-w-0 flex-1 space-y-1.5 text-right">
+                <h2 className="truncate text-base font-bold text-foreground">
+                  <bdi>{g.name}</bdi>
+                </h2>
+                <p className="flex items-center gap-2 text-xs">
+                  <span className="font-bold text-primary">{g.price ?? "غير متاح"}</span>
+                  {!!g.discount && g.discount > 0 && (
+                    <span className="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      -{g.discount}%
+                    </span>
+                  )}
+                </p>
+              </div>
+            </Link>
+
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 border-t border-white/5 pt-2 sm:border-t-0 sm:pt-0">
+              {quickAdd.map((a) => (
+                <Button
+                  key={a.status}
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 rounded-lg bg-secondary/80 px-3 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => add(g, a.status)}
+                >
+                  <Plus className="ml-1 size-3.5" />
+                  {a.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

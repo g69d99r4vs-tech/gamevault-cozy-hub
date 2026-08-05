@@ -3,51 +3,54 @@ import { createServerFn } from "@tanstack/react-start";
 export const searchGamesFn = createServerFn({ method: "POST" })
   .inputValidator((d: { q: string; limit?: number }) => d)
   .handler(async ({ data }) => {
-    const { searchIgdb } = await import("./igdb-search.server");
-    return searchIgdb(data.q, data.limit ?? 12);
+    const { searchSteam } = await import("./steam.server");
+    return searchSteam(data.q, data.limit ?? 20);
   });
 
 export const getGameFn = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; slug?: string; name?: string }) => d)
   .handler(async ({ data }) => {
-    const { resolveGame } = await import("./igdb-search.server");
-    return resolveGame(data.id, { ...(data.slug ? { slug: data.slug } : {}), ...(data.name ? { name: data.name } : {}) });
+    const { resolveSteamGame } = await import("./steam.server");
+    return resolveSteamGame(data.id, {
+      ...(data.slug ? { slug: data.slug } : {}),
+      ...(data.name ? { name: data.name } : {}),
+    });
   });
 
 export const getGameBySlugFn = createServerFn({ method: "POST" })
   .inputValidator((d: { slug: string }) => d)
   .handler(async ({ data }) => {
-    const { gameBySlug } = await import("./igdb-search.server");
-    return gameBySlug(data.slug);
+    const { gameBySlugSteam } = await import("./steam.server");
+    return gameBySlugSteam(data.slug);
   });
 
 export const getScreenshotsFn = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    const { screenshotsFor } = await import("./igdb-search.server");
-    return screenshotsFor(data.id);
+    const { screenshotsSteam } = await import("./steam.server");
+    return screenshotsSteam(data.id);
   });
 
 export const getSimilarFn = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    const { similarFor } = await import("./igdb-search.server");
-    return similarFor(data.id);
+    const { similarSteam } = await import("./steam.server");
+    return similarSteam(data.id);
   });
 
 export const getTrendingFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { trendingGames } = await import("./igdb-search.server");
-  return trendingGames();
+  const { trendingSteam } = await import("./steam.server");
+  return trendingSteam();
 });
 
 export const getUpcomingFn = createServerFn({ method: "GET" }).handler(async () => {
-  const { upcomingGames } = await import("./igdb-search.server");
-  return upcomingGames();
+  const { upcomingSteam } = await import("./steam.server");
+  return upcomingSteam();
 });
 
 export const getRecommendedFn = createServerFn({ method: "POST" })
   .inputValidator((d: { genres?: string[]; ids?: number[]; names?: string[] }) => d)
   .handler(async ({ data }) => {
-    const { recommendedGames } = await import("./igdb-search.server");
-    return recommendedGames(data.genres ?? [], data.ids ?? [], data.names ?? []);
+    const { recommendedSteam } = await import("./steam.server");
+    return recommendedSteam(data.ids ?? [], data.names ?? []);
   });

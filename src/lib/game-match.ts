@@ -1,6 +1,6 @@
 /** أدوات مطابقة وتنقية أسماء الألعاب — آمنة للعميل والخادم */
 
-export type RawgGame = import("./igdb.server").GameDTO;
+export type RawgGame = import("./steam.server").GameDTO;
 
 /** إصدارات غير أساسية — نعرض النسخة الأساسية فقط (الريميك/الريماستر مسموح) */
 const EDITION_NOISE =
