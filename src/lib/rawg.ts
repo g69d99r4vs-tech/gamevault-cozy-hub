@@ -1,5 +1,5 @@
 /**
- * واجهة بيانات الألعاب — مدعومة بقاعدة IGDB الاحترافية عبر دوال الخادم.
+ * واجهة بيانات الألعاب — مدعومة بمتجر Steam عبر دوال الخادم (بلا مشاكل CORS).
  * الاسم محفوظ للتوافق مع بقية التطبيق.
  */
 import {
@@ -11,8 +11,8 @@ import {
   getTrendingFn,
   getUpcomingFn,
   searchGamesFn,
-} from "./igdb.functions";
-import type { GameDTO } from "./igdb.server";
+} from "./steam.functions";
+import type { GameDTO } from "./steam.server";
 
 export type RawgGame = GameDTO;
 
@@ -26,7 +26,9 @@ export {
   byPrestige,
 } from "./game-match";
 
-export const searchGames = (q: string, limit = 12): Promise<RawgGame[]> =>
+export const steamStoreUrl = (id: number | string) => `https://store.steampowered.com/app/${id}`;
+
+export const searchGames = (q: string, limit = 20): Promise<RawgGame[]> =>
   q.trim().length < 2
     ? Promise.resolve([])
     : searchGamesFn({ data: { q: q.trim(), limit } }).catch(() => [] as RawgGame[]);
