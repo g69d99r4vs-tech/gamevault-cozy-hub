@@ -261,9 +261,12 @@ async function featured(): Promise<{
   specials?: { items?: FeaturedItem[] };
   new_releases?: { items?: FeaturedItem[] };
 }> {
-  return getJson(
-    `https://store.steampowered.com/api/featuredcategories?cc=${CC}&l=${LANG}`,
-  ).catch(() => ({}));
+  return getJson<{
+    top_sellers?: { items?: FeaturedItem[] };
+    coming_soon?: { items?: FeaturedItem[] };
+    specials?: { items?: FeaturedItem[] };
+    new_releases?: { items?: FeaturedItem[] };
+  }>(`https://store.steampowered.com/api/featuredcategories?cc=${CC}&l=${LANG}`).catch(() => ({}));
 }
 
 export async function trendingSteam(): Promise<GameDTO[]> {
