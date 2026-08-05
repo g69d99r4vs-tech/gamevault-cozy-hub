@@ -1,5 +1,5 @@
 /**
- * واجهة بيانات الألعاب — مدعومة بمتجر Steam عبر دوال الخادم (بلا مشاكل CORS).
+ * واجهة بيانات الألعاب — مدعومة بقاعدة IGDB الاحترافية عبر دوال الخادم.
  * الاسم محفوظ للتوافق مع بقية التطبيق.
  */
 import {
@@ -11,8 +11,8 @@ import {
   getTrendingFn,
   getUpcomingFn,
   searchGamesFn,
-} from "./steam.functions";
-import type { GameDTO } from "./steam.server";
+} from "./igdb.functions";
+import type { GameDTO } from "./igdb.server";
 
 export type RawgGame = GameDTO;
 
@@ -26,24 +26,13 @@ export {
   byPrestige,
 } from "./game-match";
 
-export const steamStoreUrl = (id: number | string) => `https://store.steampowered.com/app/${id}`;
-
-export const searchGames = (q: string, limit = 20): Promise<RawgGame[]> =>
+export const searchGames = (q: string, limit = 12): Promise<RawgGame[]> =>
   q.trim().length < 2
     ? Promise.resolve([])
     : searchGamesFn({ data: { q: q.trim(), limit } }).catch(() => [] as RawgGame[]);
 
-export const getGame = async (
-  id: string | number,
-  hint?: { slug?: string; name?: string },
-): Promise<RawgGame> => {
-  const game = await getGameFn({
-    data: {
-      id: String(id),
-      ...(hint?.slug ? { slug: hint.slug } : {}),
-      ...(hint?.name ? { name: hint.name } : {}),
-    },
-  });
+export const getGame = async (id: string | number): Promise<RawgGame> => {
+  const game = await getGameFn({ data: { id: String(id) } });
   if (!game) throw new Error("تعذر العثور على اللعبة");
   return game;
 };
