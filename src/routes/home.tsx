@@ -21,8 +21,6 @@ import { CelebrationModal } from "@/components/CelebrationModal";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
-import { buzz } from "@/lib/haptics";
-import { toast } from "sonner";
 import heroFallback from "@/assets/hero-fallback.jpg";
 
 
