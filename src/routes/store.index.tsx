@@ -8,7 +8,7 @@ import { SectionTitle } from "@/components/ui-bits";
 import { useFavorites } from "@/lib/store-favorites";
 import { buzz } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
-import { onImgError, safeImg } from "@/lib/img";
+import { SmartImage } from "@/components/SmartImage";
 
 export const Route = createFileRoute("/store/")({
   head: () => ({
@@ -70,11 +70,10 @@ function GameCardStore({ item, index }: { item: Item; index: number }) {
         className="group block overflow-hidden rounded-3xl border border-border bg-card text-right surface-hover"
       >
         <div className="relative aspect-[460/215] overflow-hidden">
-          <img
-            src={safeImg(item.image)}
-            onError={onImgError}
+          <SmartImage
+            src={item.image}
+            name={item.name}
             alt={item.name}
-            loading="lazy"
             className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           {item.discount > 0 && (
@@ -111,8 +110,7 @@ function HeroCarousel({ items }: { items: Item[] }) {
       <AnimatePresence mode="wait">
         <motion.img
           key={item.appId}
-          src={safeImg(item.image)}
-          onError={onImgError}
+          src={item.image}
           alt={item.name}
           initial={{ opacity: 0, scale: 1.08 }}
           animate={{ opacity: 0.65, scale: 1 }}
