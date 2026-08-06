@@ -250,22 +250,9 @@ const tabs = [
   { v: "favs", l: "مفضلتي" },
 ] as const;
 
-const genres = [
-  { l: "الكل", q: "" },
-  { l: "إثارة", q: "action" },
-  { l: "رعب", q: "horror" },
-  { l: "مغامرة", q: "adventure" },
-  { l: "RPG", q: "rpg" },
-  { l: "رياضة", q: "sports" },
-  { l: "سباقات", q: "racing" },
-  { l: "قتال", q: "fighting" },
-  { l: "استراتيجية", q: "strategy" },
-] as const;
-
 function StorePage() {
   const [term, setTerm] = useState("");
   const [tab, setTab] = useState<(typeof tabs)[number]["v"]>("sales");
-  const [genre, setGenre] = useState("");
   const favorites = useFavorites((s) => s.favorites);
 
   const shelves = useQuery({
@@ -287,12 +274,6 @@ function StorePage() {
     enabled: q.length >= 2,
   });
 
-  const genreQuery = useQuery({
-    queryKey: ["steam-genre", genre],
-    queryFn: () => steamSearchFn({ data: { term: genre } }),
-    enabled: genre.length > 0,
-  });
-
   const results = useMemo(() => (search.data ?? []) as Item[], [search.data]);
   const data = shelves.data;
   const specials = useMemo(
@@ -303,7 +284,6 @@ function StorePage() {
   const topSellers = (data?.topSellers ?? []) as Item[];
   const newReleases = (data?.newReleases ?? []) as Item[];
   const bundleItems = (bundles.data ?? []) as Item[];
-  const genreItems = (genreQuery.data ?? []) as Item[];
 
   const loadingRow = (
     <div className="flex gap-3 overflow-hidden">
@@ -326,27 +306,6 @@ function StorePage() {
           placeholder="ابحث عن لعبة في ستيم…"
           className="h-12 w-full rounded-2xl border border-border bg-card pr-11 ps-4 text-sm outline-none ring-primary/40 transition focus:ring-2"
         />
-      </div>
-
-      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
-        {genres.map((g) => (
-          <button
-            key={g.l}
-            type="button"
-            onClick={() => {
-              buzz(15);
-              setGenre(g.q);
-            }}
-            className={cn(
-              "shrink-0 rounded-full border px-4 py-2 text-xs font-black transition",
-              genre === g.q
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card text-muted-foreground hover:border-primary/40",
-            )}
-          >
-            {g.l}
-          </button>
-        ))}
       </div>
 
       <div className="flex gap-1 rounded-2xl bg-secondary/50 p-1">
@@ -405,26 +364,6 @@ function StorePage() {
           ) : (
             <p className="rounded-3xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
               ما فيه ألعاب بالمفضلة — افتح أي لعبة وأضفها ❤️
-            </p>
-          )}
-        </section>
-      ) : genre ? (
-        <section className="space-y-3">
-          <SectionTitle
-            title={`تصنيف: ${genres.find((g) => g.q === genre)?.l ?? ""}`}
-            subtitle="نتائج من متجر ستيم"
-          />
-          {genreQuery.isLoading ? (
-            loadingRow
-          ) : genreItems.length ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-              {genreItems.map((item, i) => (
-                <GameCardStore key={`${item.appId}-${i}`} item={item} index={i} />
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-3xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-              ما فيه نتائج لهذا التصنيف حاليًا.
             </p>
           )}
         </section>
