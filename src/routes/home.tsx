@@ -90,29 +90,6 @@ function Dashboard() {
   const ownedIds = useMemo(() => data.entries.map((entry) => entry.id), [data.entries]);
   const ownedNames = useMemo(() => data.entries.map((entry) => entry.name), [data.entries]);
 
-  const { data: recommended = [] } = useQuery({
-    queryKey: ["recommended", topGenres, ownedIds, ownedNames],
-    queryFn: () => getRecommended(topGenres, { ids: ownedIds, names: ownedNames }),
-    staleTime: 1000 * 60 * 30,
-  });
-
-  const owned = useMemo(() => new Set(ownedIds), [ownedIds]);
-  const ownedByName = useMemo(
-    () => new Set(ownedNames.map((name) => name.trim().toLocaleLowerCase())),
-    [ownedNames],
-  );
-  const trending = useMemo(
-    () =>
-      recommended
-        .filter(
-          (game) =>
-            !owned.has(game.id) &&
-            !ownedByName.has(game.name.trim().toLocaleLowerCase()),
-        )
-        .slice(0, 14),
-    [recommended, owned, ownedByName],
-  );
-
   const gotm = gameOfMonth(data.entries);
   const memories = memoryBox(data.entries);
   const stats = computeStats(data.entries);
@@ -165,12 +142,9 @@ function Dashboard() {
   /** بانر سينمائي: صورة اللعبة الحالية، وإلا كولاج من المقترحات، وإلا صورة احتياطية */
   const bannerImages = useMemo(() => {
     if (hero?.image) return [hero.image];
-    const pool = [
-      ...data.entries.map((e) => e.image),
-      ...trending.map((g) => g.background_image),
-    ].filter((x): x is string => !!x);
+    const pool = data.entries.map((e) => e.image).filter((x): x is string => !!x);
     return pool.slice(0, 3).length === 3 ? pool.slice(0, 3) : pool.slice(0, 1);
-  }, [hero, data.entries, trending]);
+  }, [hero, data.entries]);
   const quick = [
     { icon: Trophy, label: "مكتملة", value: num(stats.completed) },
     { icon: Zap, label: "المستوى", value: num(level) },
@@ -253,12 +227,11 @@ function Dashboard() {
               <p className="text-xs text-muted-foreground">ما فيه لعبة قيد اللعب</p>
               <h2 className="font-display text-2xl font-black md:text-3xl">ابدأ رحلتك الجديدة اليوم</h2>
               <p className="text-xs text-muted-foreground">{quote}</p>
-              <Button
-                onClick={pickRandomPlan}
-                className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]"
-              >
-                <Plus className="size-4" /> اختر لعبة من الخطة
-              </Button>
+              <Link to="/upcoming" search={{ tab: "toBeat" as const }}>
+                <Button className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]">
+                  <Plus className="size-4" /> اختر لعبة من الخطة
+                </Button>
+              </Link>
 
             </>
           )}
