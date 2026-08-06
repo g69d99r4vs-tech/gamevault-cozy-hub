@@ -311,10 +311,7 @@ function PlanPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <DateEditDialog game={editing} onClose={() => setEditing(null)} />
     </div>
-      <DateEditDialog
-        game={editing}
-        onClose={() => setEditing(null)}
-      />
   );
 }
