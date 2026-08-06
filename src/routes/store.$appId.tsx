@@ -72,7 +72,9 @@ function StoreGamePage() {
     if (fromStore.length) return fromStore;
     const fromIgdb = (fallbackShots.data ?? []).map((s) => s.image).filter(Boolean);
     if (fromIgdb.length) return fromIgdb;
-    return [data?.image ?? image].filter(Boolean) as string[];
+    return [
+      data?.image ?? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`,
+    ].filter(Boolean) as string[];
   })();
 
   const plannedRelease = safeUpcomingDate(data?.released ?? null);

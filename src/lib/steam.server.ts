@@ -118,7 +118,7 @@ export async function searchSteam(term: string): Promise<SteamItem[]> {
         ...item,
         released: d.released,
         comingSoon: d.comingSoon,
-        isFree: d.isFree,
+        isFree: Boolean(d.isFree),
         uahFinal: d.uahFinal || item.uahFinal,
         uahInitial: d.uahInitial || item.uahInitial,
         discount: d.discount || item.discount,
