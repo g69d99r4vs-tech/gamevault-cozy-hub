@@ -56,7 +56,7 @@ function StoreGamePage() {
     <div dir="rtl" className="relative -mt-2 space-y-6">
       {/* خلفية سينمائية */}
       <div className="pointer-events-none absolute inset-x-0 -top-24 h-[420px] overflow-hidden">
-        <img src={safeImg(image)} onError={onImgError} alt="" aria-hidden className="size-full scale-110 object-cover opacity-25 blur-2xl" />
+        <img src={safeImg(image)} alt="" aria-hidden className="size-full scale-110 object-cover opacity-25 blur-2xl" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background" />
       </div>
 
