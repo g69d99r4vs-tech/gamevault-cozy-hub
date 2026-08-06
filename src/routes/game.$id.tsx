@@ -14,6 +14,8 @@ import { motion } from "motion/react";
 import { ExternalLink } from "lucide-react";
 import { Lightbox } from "@/components/Lightbox";
 import placeholder from "@/assets/game-placeholder.jpg";
+import { shotsByNameFn } from "@/lib/igdb.functions";
+import { steamShotsFn } from "@/lib/steam.functions";
 
 export const Route = createFileRoute("/game/$id")({
   head: () => ({
@@ -64,6 +66,8 @@ function GamePage() {
     enabled: !!remote,
   });
 
+  const steamAppId = Number(id) > 900_000_000 ? Number(id) - 900_000_000 : null;
+
   // ألعاب مضافة يدويًا (من المتجر مثلًا) قد لا توجد في قاعدة البيانات — نعرضها من التخزين المحلي
   const fallback = entry
     ? ({
@@ -81,10 +85,30 @@ function GamePage() {
 
   const game = remote ?? fallback;
 
+  const gameName = game?.name ?? entry?.name ?? "";
+
+  // مصادر احتياطية للقطات: ستيم (للألعاب المضافة من المتجر) ثم بحث بالاسم
+  const { data: steamShots } = useQuery({
+    queryKey: ["steam-shots", steamAppId],
+    queryFn: () => steamShotsFn({ data: { appId: steamAppId! } }),
+    enabled: !!steamAppId && !shots?.length,
+    staleTime: 1000 * 60 * 60,
+  });
+  const { data: nameShots } = useQuery({
+    queryKey: ["name-shots", gameName],
+    queryFn: () => shotsByNameFn({ data: { name: gameName } }),
+    enabled: !!gameName && !shots?.length && !steamShots?.length,
+    staleTime: 1000 * 60 * 60,
+  });
+
   // معرض الصور: نستخدم اللقطات إن توفرت، وإلا نبني معرضًا من الغلاف والخلفية
   const gallery: string[] = (() => {
     const fromApi = (shots ?? []).map((s) => s.image).filter(Boolean);
     if (fromApi.length) return fromApi;
+    const fromSteam = (steamShots ?? []).filter(Boolean);
+    if (fromSteam.length) return fromSteam;
+    const fromName = (nameShots ?? []).map((s) => s.image).filter(Boolean);
+    if (fromName.length) return fromName;
     const candidates = [
       (game as any)?.background_image,
       (game as any)?.background_image_additional,
