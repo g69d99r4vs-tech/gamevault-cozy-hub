@@ -74,13 +74,34 @@ export async function fetchSpecials(): Promise<SteamItem[]> {
   return out;
 }
 
-type RawSearch = {
-  items?: {
-    id: number;
-    name: string;
-    tiny_image?: string;
-    price?: { initial?: number; final?: number };
-  }[];
+type RawSearchItem = {
+  id: number;
+  name: string;
+  type?: string;
+  tiny_image?: string;
+  price?: { initial?: number; final?: number };
+};
+
+type RawSearch = { items?: RawSearchItem[] };
+
+/**
+ * ستيم يخزّن صور الحزم (bundle/sub) في مسارات مختلفة عن الألعاب (apps).
+ * نرقّي الصورة المصغّرة إلى غلاف كامل، وإلا نبني رابط CDN حسب النوع.
+ */
+export const storeImage = (it: { id: number; type?: string; tiny_image?: string }) => {
+  const tiny = it.tiny_image;
+  if (tiny) {
+    const full = tiny
+      .replace("capsule_sm_120", "header")
+      .replace("capsule_231x87", "header")
+      .replace("capsule_184x69", "header");
+    if (full) return full.startsWith("//") ? `https:${full}` : full;
+  }
+  const cdn = "https://cdn.akamai.steamstatic.com/steam";
+  const kind = (it.type ?? "app").toLowerCase();
+  if (kind === "bundle") return `${cdn}/bundles/${it.id}/header_586x192.jpg`;
+  if (kind === "sub" || kind === "package") return `${cdn}/subs/${it.id}/header.jpg`;
+  return `${cdn}/apps/${it.id}/header.jpg`;
 };
 
 const parseDate = (raw: string | undefined | null) => {
