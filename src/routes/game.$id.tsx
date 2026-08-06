@@ -80,6 +80,21 @@ function GamePage() {
 
   const game = remote ?? fallback;
 
+  // معرض الصور: نستخدم اللقطات إن توفرت، وإلا نبني معرضًا من الغلاف والخلفية
+  const gallery: string[] = (() => {
+    const fromApi = (shots ?? []).map((s) => s.image).filter(Boolean);
+    if (fromApi.length) return fromApi;
+    const candidates = [
+      (game as any)?.background_image,
+      (game as any)?.background_image_additional,
+      (game as any)?.cover,
+      entry?.image,
+    ].filter(Boolean) as string[];
+    const unique = Array.from(new Set(candidates));
+    return unique.length ? unique : [placeholder];
+  })();
+
+
   if (isLoading && !game) {
     return (
       <div className="space-y-4">
