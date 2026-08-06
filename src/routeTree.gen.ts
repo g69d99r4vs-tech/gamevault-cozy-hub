@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HallRouteImport } from './routes/hall'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LibraryRouteImport } from './routes/library'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -22,8 +23,6 @@ import { Route as UpcomingRouteImport } from './routes/upcoming'
 import { Route as WrapRouteImport } from './routes/wrap'
 import { Route as FranchiseNameRouteImport } from './routes/franchise.$name'
 import { Route as GameIdRouteImport } from './routes/game.$id'
-import { Route as StoreIndexRouteImport } from './routes/store.index'
-import { Route as StoreDealIdRouteImport } from './routes/store.$dealId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -43,6 +42,11 @@ const HomeRoute = HomeRouteImport.update({
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -90,22 +94,13 @@ const GameIdRoute = GameIdRouteImport.update({
   path: '/game/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoreIndexRoute = StoreIndexRouteImport.update({
-  id: '/store/',
-  path: '/store/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StoreDealIdRoute = StoreDealIdRouteImport.update({
-  id: '/store/$dealId',
-  path: '/store/$dealId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hall': typeof HallRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/news': typeof NewsRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -115,14 +110,13 @@ export interface FileRoutesByFullPath {
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
-  '/store/$dealId': typeof StoreDealIdRoute
-  '/store/': typeof StoreIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hall': typeof HallRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/news': typeof NewsRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -132,8 +126,6 @@ export interface FileRoutesByTo {
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
-  '/store/$dealId': typeof StoreDealIdRoute
-  '/store': typeof StoreIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -141,6 +133,7 @@ export interface FileRoutesById {
   '/hall': typeof HallRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/news': typeof NewsRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -150,8 +143,6 @@ export interface FileRoutesById {
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
-  '/store/$dealId': typeof StoreDealIdRoute
-  '/store/': typeof StoreIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,6 +151,7 @@ export interface FileRouteTypes {
     | '/hall'
     | '/home'
     | '/library'
+    | '/news'
     | '/profile'
     | '/search'
     | '/settings'
@@ -169,14 +161,13 @@ export interface FileRouteTypes {
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
-    | '/store/$dealId'
-    | '/store/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/hall'
     | '/home'
     | '/library'
+    | '/news'
     | '/profile'
     | '/search'
     | '/settings'
@@ -186,14 +177,13 @@ export interface FileRouteTypes {
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
-    | '/store/$dealId'
-    | '/store'
   id:
     | '__root__'
     | '/'
     | '/hall'
     | '/home'
     | '/library'
+    | '/news'
     | '/profile'
     | '/search'
     | '/settings'
@@ -203,8 +193,6 @@ export interface FileRouteTypes {
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
-    | '/store/$dealId'
-    | '/store/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -212,6 +200,7 @@ export interface RootRouteChildren {
   HallRoute: typeof HallRoute
   HomeRoute: typeof HomeRoute
   LibraryRoute: typeof LibraryRoute
+  NewsRoute: typeof NewsRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
@@ -221,8 +210,6 @@ export interface RootRouteChildren {
   WrapRoute: typeof WrapRoute
   FranchiseNameRoute: typeof FranchiseNameRoute
   GameIdRoute: typeof GameIdRoute
-  StoreDealIdRoute: typeof StoreDealIdRoute
-  StoreIndexRoute: typeof StoreIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -253,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -318,20 +312,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/store/': {
-      id: '/store/'
-      path: '/store'
-      fullPath: '/store/'
-      preLoaderRoute: typeof StoreIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/store/$dealId': {
-      id: '/store/$dealId'
-      path: '/store/$dealId'
-      fullPath: '/store/$dealId'
-      preLoaderRoute: typeof StoreDealIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -340,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   HallRoute: HallRoute,
   HomeRoute: HomeRoute,
   LibraryRoute: LibraryRoute,
+  NewsRoute: NewsRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
@@ -349,8 +330,6 @@ const rootRouteChildren: RootRouteChildren = {
   WrapRoute: WrapRoute,
   FranchiseNameRoute: FranchiseNameRoute,
   GameIdRoute: GameIdRoute,
-  StoreDealIdRoute: StoreDealIdRoute,
-  StoreIndexRoute: StoreIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
