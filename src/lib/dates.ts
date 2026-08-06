@@ -59,18 +59,10 @@ export const countdown = (target: string | null, now: number) => {
   };
 };
 
-const dayMonthFmt = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-nu-latn", {
-  day: "numeric",
-  month: "long",
-});
-
-/** «15 صفر» — تاريخ مقروء مختصر بالهجري */
+/** «15/03» — يوم/شهر بأرقام هجرية فقط */
 export const dayMonth = (date: string | Date | null | undefined, fallback = "—") => {
-  const d = toDate(date);
-  if (!d) return fallback;
-  try {
-    return dayMonthFmt.format(d);
-  } catch {
-    return fallback;
-  }
+  const h = hijri(date, fallback);
+  if (h === fallback) return fallback;
+  return h.split("/").slice(0, 2).join("/");
 };
+
