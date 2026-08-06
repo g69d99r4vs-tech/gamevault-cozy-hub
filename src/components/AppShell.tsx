@@ -10,7 +10,7 @@ import {
   Crown,
   PartyPopper,
   BarChart3,
-  Newspaper,
+  Store,
 } from "lucide-react";
 import { useCurrentData, useStore } from "@/lib/store";
 import { computeLevel } from "@/lib/stats";
@@ -25,7 +25,7 @@ import type { ReactNode } from "react";
 const mainNav = [
   { to: "/home", label: "الرئيسية", icon: LayoutDashboard },
   { to: "/library", label: "المكتبة", icon: Library },
-  { to: "/news", label: "الأخبار", icon: Newspaper },
+  { to: "/store", label: "المتجر", icon: Store },
   { to: "/upcoming", label: "الخطة", icon: CalendarClock },
   { to: "/settings", label: "الإعدادات", icon: Settings2 },
 ] as const;
