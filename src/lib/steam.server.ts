@@ -135,7 +135,6 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     uahInitial: d.price_overview?.initial ?? d.price_overview?.final ?? 0,
     discount: d.price_overview?.discount_percent ?? 0,
     isFree: Boolean(d.is_free),
-    comingSoon: Boolean(d.release_date?.coming_soon),
     description: strip(d.short_description ?? ""),
     developers: d.developers ?? [],
     genres: (d.genres ?? []).map((g) => g.description),
