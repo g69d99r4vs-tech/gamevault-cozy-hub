@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Tag, ExternalLink, X, Loader2 } from "lucide-react";
+import { Search, ExternalLink, X, Loader2 } from "lucide-react";
 import { steamSpecialsFn, steamSearchFn, steamDetailsFn } from "@/lib/steam.functions";
 import { SectionTitle } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -217,7 +217,7 @@ function StorePage() {
 
       {q.length >= 2 ? (
         <section className="space-y-3">
-          <SectionTitle icon={Search} title="نتائج البحث" subtitle={`عن «${q}»`} />
+          <SectionTitle title="نتائج البحث" subtitle={`عن «${q}»`} />
           {search.isLoading ? (
             <p className="py-6 text-center text-sm text-muted-foreground">جاري البحث…</p>
           ) : results.length ? (
@@ -240,7 +240,7 @@ function StorePage() {
       ) : null}
 
       <section className={cn("space-y-3", q.length >= 2 && "opacity-90")}>
-        <SectionTitle icon={Tag} title="العروض الحالية" subtitle="أسعار ستيم محوّلة للريال السعودي" />
+        <SectionTitle title="العروض الحالية" subtitle="أسعار ستيم محوّلة للريال السعودي" />
         {specials.isLoading ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (

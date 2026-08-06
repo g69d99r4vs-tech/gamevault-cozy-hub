@@ -18,6 +18,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as StoreRouteImport } from './routes/store'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as UpcomingRouteImport } from './routes/upcoming'
 import { Route as WrapRouteImport } from './routes/wrap'
@@ -69,6 +70,11 @@ const StatsRoute = StatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreRoute = StoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/store': typeof StoreRoute
   '/timeline': typeof TimelineRoute
   '/upcoming': typeof UpcomingRoute
   '/wrap': typeof WrapRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/store': typeof StoreRoute
   '/timeline': typeof TimelineRoute
   '/upcoming': typeof UpcomingRoute
   '/wrap': typeof WrapRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
+  '/store': typeof StoreRoute
   '/timeline': typeof TimelineRoute
   '/upcoming': typeof UpcomingRoute
   '/wrap': typeof WrapRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/stats'
+    | '/store'
     | '/timeline'
     | '/upcoming'
     | '/wrap'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/stats'
+    | '/store'
     | '/timeline'
     | '/upcoming'
     | '/wrap'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/stats'
+    | '/store'
     | '/timeline'
     | '/upcoming'
     | '/wrap'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
+  StoreRoute: typeof StoreRoute
   TimelineRoute: typeof TimelineRoute
   UpcomingRoute: typeof UpcomingRoute
   WrapRoute: typeof WrapRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store': {
+      id: '/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof StoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/timeline': {
       id: '/timeline'
       path: '/timeline'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
+  StoreRoute: StoreRoute,
   TimelineRoute: TimelineRoute,
   UpcomingRoute: UpcomingRoute,
   WrapRoute: WrapRoute,
@@ -334,13 +355,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
