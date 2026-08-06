@@ -12,7 +12,7 @@ const toDate = (date: string | Date | null | undefined) => {
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
-/** 1448/02/15 */
+/** 15/03/1448 — يوم/شهر/سنة بأرقام فقط */
 export const hijri = (date: string | Date | null | undefined, fallback = "—") => {
   const d = toDate(date);
   if (!d) return fallback;
@@ -20,11 +20,14 @@ export const hijri = (date: string | Date | null | undefined, fallback = "—") 
     const parts = hijriFmt.formatToParts(d);
     const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
     const y = get("year").replace(/[^\d]/g, "");
-    return `${y}/${get("month")}/${get("day")}`;
+    const m = get("month").replace(/[^\d]/g, "").padStart(2, "0");
+    const day = get("day").replace(/[^\d]/g, "").padStart(2, "0");
+    return `${day}/${m}/${y}`;
   } catch {
     return fallback;
   }
 };
+
 
 /** يبقى الاسم للتوافق — لكنه يعرض هجريًا رقميًا مثل بقية التطبيق */
 export const gregorian = (date: string | Date | null | undefined) => hijri(date, "غير معلن");
@@ -56,18 +59,10 @@ export const countdown = (target: string | null, now: number) => {
   };
 };
 
-const dayMonthFmt = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-nu-latn", {
-  day: "numeric",
-  month: "long",
-});
-
-/** «15 صفر» — تاريخ مقروء مختصر بالهجري */
+/** «15/03» — يوم/شهر بأرقام هجرية فقط */
 export const dayMonth = (date: string | Date | null | undefined, fallback = "—") => {
-  const d = toDate(date);
-  if (!d) return fallback;
-  try {
-    return dayMonthFmt.format(d);
-  } catch {
-    return fallback;
-  }
+  const h = hijri(date, fallback);
+  if (h === fallback) return fallback;
+  return h.split("/").slice(0, 2).join("/");
 };
+

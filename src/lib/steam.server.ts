@@ -15,6 +15,9 @@ export type SteamDetails = SteamItem & {
   description: string;
   developers: string[];
   genres: string[];
+  /** YYYY-MM-DD أو null إذا لم يُعلن */
+  released: string | null;
+  comingSoon: boolean;
 };
 
 const safeJson = async (url: string): Promise<unknown> => {
@@ -109,7 +112,13 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     developers?: string[];
     genres?: { description: string }[];
     price_overview?: { initial: number; final: number; discount_percent: number };
+    release_date?: { coming_soon?: boolean; date?: string };
   };
+
+  const rawDate = d.release_date?.date ?? "";
+  const parsed = rawDate ? new Date(rawDate) : null;
+  const released =
+    parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString().slice(0, 10) : null;
 
   return {
     appId,
@@ -122,5 +131,7 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     description: strip(d.short_description ?? ""),
     developers: d.developers ?? [],
     genres: (d.genres ?? []).map((g) => g.description),
+    released,
+    comingSoon: Boolean(d.release_date?.coming_soon),
   };
 }

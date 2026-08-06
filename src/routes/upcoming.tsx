@@ -3,9 +3,10 @@ import { useState } from "react";
 import { useCurrentData, useStore, type GameEntry } from "@/lib/store";
 import { SectionTitle, EmptyState } from "@/components/ui-bits";
 import { Countdown } from "@/components/Countdown";
-import { gregorian, hijri, num } from "@/lib/dates";
+import { hijri, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { buzz } from "@/lib/haptics";
+import { onImgError } from "@/lib/img";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import { Trash2, ChevronDown, ChevronUp, GripVertical, Star, Dices } from "lucide-react";
@@ -130,6 +131,7 @@ function PlanPage() {
                       src={g.image}
                       alt={g.name}
                       loading="lazy"
+                      onError={onImgError}
                       className="size-full object-cover"
                     />
                   ) : null}
@@ -143,7 +145,7 @@ function PlanPage() {
                       </h3>
                     </Link>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      {gregorian(g.released)} · {hijri(g.released)}
+                      {hijri(g.released, "غير معلن")}
                     </p>
                   </div>
 
@@ -210,6 +212,7 @@ function PlanPage() {
                     src={e.image}
                     alt={e.name}
                     loading="lazy"
+                    onError={onImgError}
                     className="h-24 w-20 shrink-0 rounded-2xl object-cover"
                   />
                 )}
