@@ -10,6 +10,7 @@ import {
   Crown,
   PartyPopper,
   BarChart3,
+  ShoppingBag,
 } from "lucide-react";
 import { useCurrentData, useStore } from "@/lib/store";
 import { computeLevel } from "@/lib/stats";
@@ -20,13 +21,15 @@ import { UserAvatar } from "./UserAvatar";
 import logoUrl from "@/assets/gamehub-logo.png";
 import type { ReactNode } from "react";
 
-/** التنقل السفلي: 4 تبويبات (من اليمين لليسار، الإعدادات في أقصى اليسار) */
+/** التنقل السفلي: تبويبات (من اليمين لليسار، الإعدادات في أقصى اليسار) */
 const mainNav = [
   { to: "/home", label: "الرئيسية", icon: LayoutDashboard },
   { to: "/library", label: "المكتبة", icon: Library },
+  { to: "/store", label: "المتجر", icon: ShoppingBag },
   { to: "/upcoming", label: "الخطة", icon: CalendarClock },
   { to: "/settings", label: "الإعدادات", icon: Settings2 },
 ] as const;
+
 
 const nav = [
   ...mainNav,

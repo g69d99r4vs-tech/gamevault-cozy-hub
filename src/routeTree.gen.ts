@@ -22,6 +22,8 @@ import { Route as UpcomingRouteImport } from './routes/upcoming'
 import { Route as WrapRouteImport } from './routes/wrap'
 import { Route as FranchiseNameRouteImport } from './routes/franchise.$name'
 import { Route as GameIdRouteImport } from './routes/game.$id'
+import { Route as StoreIndexRouteImport } from './routes/store.index'
+import { Route as StoreDealIdRouteImport } from './routes/store.$dealId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +90,16 @@ const GameIdRoute = GameIdRouteImport.update({
   path: '/game/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreIndexRoute = StoreIndexRouteImport.update({
+  id: '/store/',
+  path: '/store/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreDealIdRoute = StoreDealIdRouteImport.update({
+  id: '/store/$dealId',
+  path: '/store/$dealId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +115,8 @@ export interface FileRoutesByFullPath {
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
+  '/store/$dealId': typeof StoreDealIdRoute
+  '/store/': typeof StoreIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +132,8 @@ export interface FileRoutesByTo {
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
+  '/store/$dealId': typeof StoreDealIdRoute
+  '/store': typeof StoreIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +150,8 @@ export interface FileRoutesById {
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
+  '/store/$dealId': typeof StoreDealIdRoute
+  '/store/': typeof StoreIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +169,8 @@ export interface FileRouteTypes {
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
+    | '/store/$dealId'
+    | '/store/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +186,8 @@ export interface FileRouteTypes {
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
+    | '/store/$dealId'
+    | '/store'
   id:
     | '__root__'
     | '/'
@@ -181,6 +203,8 @@ export interface FileRouteTypes {
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
+    | '/store/$dealId'
+    | '/store/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +221,8 @@ export interface RootRouteChildren {
   WrapRoute: typeof WrapRoute
   FranchiseNameRoute: typeof FranchiseNameRoute
   GameIdRoute: typeof GameIdRoute
+  StoreDealIdRoute: typeof StoreDealIdRoute
+  StoreIndexRoute: typeof StoreIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +318,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/': {
+      id: '/store/'
+      path: '/store'
+      fullPath: '/store/'
+      preLoaderRoute: typeof StoreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/$dealId': {
+      id: '/store/$dealId'
+      path: '/store/$dealId'
+      fullPath: '/store/$dealId'
+      preLoaderRoute: typeof StoreDealIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,17 +349,9 @@ const rootRouteChildren: RootRouteChildren = {
   WrapRoute: WrapRoute,
   FranchiseNameRoute: FranchiseNameRoute,
   GameIdRoute: GameIdRoute,
+  StoreDealIdRoute: StoreDealIdRoute,
+  StoreIndexRoute: StoreIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
