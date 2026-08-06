@@ -151,7 +151,7 @@ function HeroCarousel({ items }: { items: Item[] }) {
     <section className="relative -mx-4 overflow-hidden border-y-2 border-primary/25 shadow-[0_0_60px_-28px_oklch(0.85_0.16_85/0.9)] md:mx-0 md:rounded-[2rem] md:border-2">
       <AnimatePresence mode="wait">
         <motion.img
-          key={item.appId}
+          key={`${item.appId}-${i}`}
           src={item.image}
           alt={item.name}
           initial={{ opacity: 0, scale: 1.12 }}
@@ -204,7 +204,7 @@ function HeroCarousel({ items }: { items: Item[] }) {
       <div className="absolute bottom-5 right-5 flex gap-1.5">
         {items.map((g, idx) => (
           <span
-            key={g.appId}
+            key={`${g.appId}-${idx}`}
             className={cn(
               "h-1.5 rounded-full transition-all",
               idx === i % len ? "w-6 bg-primary" : "w-1.5 bg-foreground/30",
@@ -236,7 +236,7 @@ function Shelf({
         className="no-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1"
       >
         {items.map((item, i) => (
-          <div key={item.appId} className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[28%]">
+          <div key={`${item.appId}-${i}`} className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[28%]">
             <GameCardStore item={item} index={i} bundle={bundle} />
           </div>
         ))}
@@ -384,7 +384,7 @@ function StorePage() {
           ) : results.length ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {results.map((item, i) => (
-                <GameCardStore key={item.appId} item={item} index={i} />
+                <GameCardStore key={`${item.appId}-${i}`} item={item} index={i} />
               ))}
             </div>
           ) : (
@@ -399,7 +399,7 @@ function StorePage() {
           {favorites.length ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {favorites.map((item, i) => (
-                <GameCardStore key={item.appId} item={item} index={i} />
+                <GameCardStore key={`${item.appId}-${i}`} item={item} index={i} />
               ))}
             </div>
           ) : (
@@ -419,7 +419,7 @@ function StorePage() {
           ) : genreItems.length ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {genreItems.map((item, i) => (
-                <GameCardStore key={item.appId} item={item} index={i} />
+                <GameCardStore key={`${item.appId}-${i}`} item={item} index={i} />
               ))}
             </div>
           ) : (
@@ -462,7 +462,7 @@ function StorePage() {
                 className="no-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1"
               >
                 {bundleItems.map((item, i) => (
-                  <div key={item.appId} className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[28%]">
+                  <div key={`${item.appId}-${i}`} className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[28%]">
                     <GameCardStore item={item} index={i} bundle />
                   </div>
                 ))}
