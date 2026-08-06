@@ -1,3 +1,4 @@
+import { SmartImage } from "@/components/SmartImage";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -127,10 +128,10 @@ export function SmartSearch() {
               onClick={() => pick(g)}
             >
               <div className="relative shrink-0">
-                <img
-                  src={g.background_image ?? "/favicon.ico"}
+                <SmartImage
+                  src={g.background_image}
+                  name={g.name}
                   alt={g.name}
-                  loading="lazy"
                   className="size-16 rounded-xl object-cover"
                 />
                 {isUnreleased(g) && (
