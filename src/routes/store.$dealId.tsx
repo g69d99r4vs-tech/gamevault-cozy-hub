@@ -50,7 +50,7 @@ function DealPage() {
 
   const { data, isLoading, isError } = useQuery<StoreDealDetails>({
     queryKey: ["deal", dealId],
-    queryFn: () => getDetails({ data: { dealID: decodeURIComponent(dealId) } }),
+    queryFn: () => getDetails({ data: { dealID: dealId } }),
     staleTime: 1000 * 60 * 10,
   });
 

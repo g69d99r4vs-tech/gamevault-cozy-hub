@@ -159,7 +159,7 @@ function DealCard({ d, rates }: { d: StoreDeal; rates: Rates }) {
   return (
     <Link
       to="/store/$dealId"
-      params={{ dealId: encodeURIComponent(d.dealID) }}
+      params={{ dealId: d.dealID }}
       className="group block overflow-hidden rounded-3xl border border-border bg-card surface-hover"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-secondary">
