@@ -44,23 +44,43 @@ function GamePage() {
     (s) => s.users[s.currentUser].entries.find((e) => e.id === Number(id)) ?? null,
   );
 
-  const { data: game, isLoading } = useQuery({
+  const { data: remote, isLoading } = useQuery({
     queryKey: ["game", id],
     queryFn: () => getGame(id),
     staleTime: 1000 * 60 * 60,
+    retry: false,
   });
   const { data: shots } = useQuery({
     queryKey: ["shots", id],
     queryFn: () => getScreenshots(id),
     staleTime: 1000 * 60 * 60,
+    enabled: !!remote,
   });
   const { data: similar } = useQuery({
     queryKey: ["similar", id],
     queryFn: () => getSimilar(id),
     staleTime: 1000 * 60 * 60,
+    enabled: !!remote,
   });
 
-  if (isLoading || !game) {
+  // ألعاب مضافة يدويًا (من المتجر مثلًا) قد لا توجد في قاعدة البيانات — نعرضها من التخزين المحلي
+  const fallback = entry
+    ? ({
+        id: entry.id,
+        slug: String(entry.id),
+        name: entry.name,
+        released: entry.released,
+        background_image: entry.image,
+        rating: entry.rating ?? 0,
+        metacritic: entry.metacritic ?? null,
+        genres: (entry.genres ?? []).map((g, i) => ({ id: i, name: g, slug: g })),
+        developers: [],
+      } as unknown as NonNullable<typeof remote>)
+    : null;
+
+  const game = remote ?? fallback;
+
+  if (isLoading && !game) {
     return (
       <div className="space-y-4">
         <div className="h-72 animate-pulse rounded-[2rem] bg-card/70" />
@@ -68,6 +88,21 @@ function GamePage() {
       </div>
     );
   }
+
+  if (!game) {
+    return (
+      <div className="space-y-4 rounded-3xl border border-border bg-card p-8 text-center">
+        <h1 className="font-display text-xl font-black">تعذر العثور على اللعبة</h1>
+        <p className="text-sm text-muted-foreground">
+          قد تكون أُضيفت من المتجر أو حُذفت من مكتبتك.
+        </p>
+        <Link to="/home">
+          <Button className="rounded-2xl">العودة للرئيسية</Button>
+        </Link>
+      </div>
+    );
+  }
+
 
   const upcoming = game.released && new Date(game.released).getTime() > Date.now();
 
