@@ -7,6 +7,7 @@ import { dealDetailsFn, ratesFn } from "@/lib/deals.functions";
 import {
   FALLBACK_RATES,
   formatSar,
+  decodeDealId,
   formatUah,
   type Rates,
   type StoreDealDetails,
@@ -50,7 +51,7 @@ function DealPage() {
 
   const { data, isLoading, isError } = useQuery<StoreDealDetails>({
     queryKey: ["deal", dealId],
-    queryFn: () => getDetails({ data: { dealID: dealId } }),
+    queryFn: () => getDetails({ data: { dealID: decodeDealId(dealId) } }),
     staleTime: 1000 * 60 * 10,
   });
 

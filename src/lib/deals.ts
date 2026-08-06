@@ -112,3 +112,17 @@ export function filterByCategory(list: StoreDeal[], cat: CategoryId): StoreDeal[
       return list;
   }
 }
+
+/* ------------------------- ترميز معرّف العرض للرابط ------------------------- */
+/** معرّف CheapShark يحتوي رموزًا مُرمَّزة مسبقًا، لذا نستخدم base64 آمن للروابط */
+export const encodeDealId = (id: string) =>
+  btoa(id).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+export const decodeDealId = (slug: string) => {
+  const b = slug.replace(/-/g, "+").replace(/_/g, "/");
+  try {
+    return atob(b + "=".repeat((4 - (b.length % 4)) % 4));
+  } catch {
+    return slug;
+  }
+};
