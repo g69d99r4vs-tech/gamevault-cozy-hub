@@ -22,7 +22,7 @@ const FEEDS: { name: string; handle: string; url: string }[] = [
 
 const tag = (xml: string, name: string) => {
   const m = xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"));
-  return m ? clean(m[1]) : "";
+  return m?.[1] ? clean(m[1]) : "";
 };
 
 const clean = (raw: string) =>
@@ -47,7 +47,7 @@ const imageFrom = (xml: string): string | null => {
   ];
   for (const re of candidates) {
     const m = xml.match(re);
-    if (m) return m[1].replace(/&amp;/g, "&");
+    if (m?.[1]) return m[1].replace(/&amp;/g, "&");
   }
   return null;
 };
