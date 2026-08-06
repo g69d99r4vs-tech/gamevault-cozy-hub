@@ -1,153 +1,114 @@
 /**
- * متجر العروض — CheapShark عبر بروكسي CORS + تحويل العملة إلى الريال السعودي.
- * أسعار CheapShark بالدولار، نحوّلها لسعر المنطقة الأوكرانية (UAH) ثم إلى SAR.
+ * متجر العروض — الأنواع + تحويل العملة (دولار → هريفنيا أوكرانية → ريال سعودي).
+ * ملف آمن للعميل: لا يحتوي أي نداء شبكة.
  */
 
-export type Deal = {
+export type StoreDeal = {
   dealID: string;
   gameID: string;
   title: string;
   thumb: string;
-  salePrice: number;
-  normalPrice: number;
+  capsule: string;
+  salePriceUsd: number;
+  normalPriceUsd: number;
   savings: number;
   metacriticScore: number | null;
   steamRatingPercent: number | null;
-  steamRatingText: string | null;
   releaseDate: number | null;
-  dealRating: number | null;
+  steamAppID: string | null;
 };
 
-const PROXIES = [
-  (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-];
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const attempts = [url, ...PROXIES.map((p) => p(url))];
-  let lastErr: unknown;
-  for (const target of attempts) {
-    try {
-      const res = await fetch(target);
-      if (!res.ok) throw new Error(String(res.status));
-      return (await res.json()) as T;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr ?? new Error("تعذر جلب البيانات");
-}
-
-const num = (v: unknown) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
-
-const toDeal = (d: Record<string, unknown>): Deal => ({
-  dealID: String(d["dealID"] ?? ""),
-  gameID: String(d["gameID"] ?? ""),
-  title: String(d["title"] ?? ""),
-  thumb: String(d["thumb"] ?? ""),
-  salePrice: num(d["salePrice"]),
-  normalPrice: num(d["normalPrice"]),
-  savings: num(d["savings"]),
-  metacriticScore: num(d["metacriticScore"]) || null,
-  steamRatingPercent: num(d["steamRatingPercent"]) || null,
-  steamRatingText: (d["steamRatingText"] as string) || null,
-  releaseDate: num(d["releaseDate"]) || null,
-  dealRating: num(d["dealRating"]) || null,
-});
-
-const BASE = "https://www.cheapshark.com/api/1.0";
-
-/** الأكثر رواجًا في المتجر (حسب تقييم الصفقة والشعبية) */
-export const getTopDeals = async (): Promise<Deal[]> => {
-  const list = await fetchJson<Record<string, unknown>[]>(
-    `${BASE}/deals?storeID=1&sortBy=Reviews&pageSize=24&AAA=1`,
-  );
-  return list.map(toDeal).filter((d) => d.thumb);
-};
-
-/** أقوى التخفيضات */
-export const getSaleDeals = async (): Promise<Deal[]> => {
-  const list = await fetchJson<Record<string, unknown>[]>(
-    `${BASE}/deals?storeID=1&sortBy=Savings&pageSize=36&upperPrice=60`,
-  );
-  return list
-    .map(toDeal)
-    .filter((d) => d.thumb && d.savings > 20 && d.salePrice > 0);
-};
-
-export type DealDetails = {
+export type StoreDealDetails = {
+  dealID: string;
   title: string;
   thumb: string;
-  salePrice: number;
-  retailPrice: number;
-  steamAppID: string | null;
-  releaseDate: number | null;
+  hero: string;
+  salePriceUsd: number;
+  retailPriceUsd: number;
+  cheapestEverUsd: number | null;
   metacriticScore: number | null;
+  steamRatingPercent: number | null;
+  steamRatingText: string | null;
   publisher: string | null;
+  developer: string | null;
+  releaseDate: number | null;
+  genres: string[];
   description: string;
-};
-
-export const getDealDetails = async (dealID: string): Promise<DealDetails> => {
-  const raw = await fetchJson<Record<string, unknown>>(
-    `${BASE}/deals?id=${encodeURIComponent(dealID)}`,
-  );
-  const info = (raw["gameInfo"] ?? {}) as Record<string, unknown>;
-  return {
-    title: String(info["name"] ?? "لعبة"),
-    thumb: String(info["thumb"] ?? ""),
-    salePrice: num(info["salePrice"]),
-    retailPrice: num(info["retailPrice"]),
-    steamAppID: (info["steamAppID"] as string) || null,
-    releaseDate: num(info["releaseDate"]) || null,
-    metacriticScore: num(info["metacriticScore"]) || null,
-    publisher: (info["publisher"] as string) || null,
-    description:
-      "عرض حالي على متجر Steam. السعر معروض بالريال السعودي بعد تحويله من سعر المنطقة الأوكرانية (UAH)، ويُحدَّث تلقائيًا حسب أسعار الصرف.",
-  };
+  screenshots: string[];
+  steamAppID: string | null;
 };
 
 /* ------------------------- تحويل العملة ------------------------- */
 
-/** أسعار احتياطية ثابتة عند فشل واجهة الصرف */
-const FALLBACK_USD_UAH = 41.5;
-const FALLBACK_UAH_SAR = 0.0904;
-
-export type Rates = { usdToUah: number; uahToSar: number };
-
-export const FALLBACK_RATES: Rates = {
-  usdToUah: FALLBACK_USD_UAH,
-  uahToSar: FALLBACK_UAH_SAR,
+export type Rates = {
+  /** دولار أمريكي → هريفنيا أوكرانية */
+  usdToUah: number;
+  /** هريفنيا أوكرانية → ريال سعودي */
+  uahToSar: number;
 };
 
-/** يجلب سعر الصرف الحيّ مع سقوط آمن لقيم ثابتة */
-export const getRates = async (): Promise<Rates> => {
-  try {
-    const data = await fetchJson<{ rates?: Record<string, number> }>(
-      "https://open.er-api.com/v6/latest/USD",
-    );
-    const uah = data.rates?.["UAH"];
-    const sar = data.rates?.["SAR"];
-    if (!uah || !sar) return FALLBACK_RATES;
-    return { usdToUah: uah, uahToSar: sar / uah };
-  } catch {
-    return FALLBACK_RATES;
+export const FALLBACK_RATES: Rates = { usdToUah: 41.5, uahToSar: 0.091 };
+
+export const usdToUah = (usd: number, r: Rates = FALLBACK_RATES) => usd * r.usdToUah;
+export const uahToSar = (uah: number, r: Rates = FALLBACK_RATES) => uah * r.uahToSar;
+export const toSar = (usd: number, r: Rates = FALLBACK_RATES) =>
+  uahToSar(usdToUah(usd, r), r);
+
+/** السعر النهائي بالريال السعودي */
+export const formatSar = (usd: number, r: Rates = FALLBACK_RATES) => {
+  const v = toSar(usd, r);
+  if (v <= 0) return "مجانًا";
+  return `${v < 10 ? v.toFixed(1) : Math.round(v)} ر.س`;
+};
+
+export const formatUah = (usd: number, r: Rates = FALLBACK_RATES) =>
+  `${Math.round(usdToUah(usd, r))} ₴`;
+
+/* ------------------------- التصنيفات ------------------------- */
+
+export type CategoryId =
+  | "all"
+  | "hot"
+  | "aaa"
+  | "under50"
+  | "topRated"
+  | "new";
+
+export const CATEGORIES: { id: CategoryId; label: string }[] = [
+  { id: "all", label: "الكل" },
+  { id: "hot", label: "أقوى الخصومات" },
+  { id: "aaa", label: "ألعاب كبرى" },
+  { id: "under50", label: "أقل من 50 ر.س" },
+  { id: "topRated", label: "الأعلى تقييمًا" },
+  { id: "new", label: "إصدارات حديثة" },
+];
+
+const YEAR = 60 * 60 * 24 * 365;
+
+export function filterByCategory(list: StoreDeal[], cat: CategoryId): StoreDeal[] {
+  const now = Date.now() / 1000;
+  switch (cat) {
+    case "hot":
+      return [...list].filter((d) => d.savings >= 50).sort((a, b) => b.savings - a.savings);
+    case "aaa":
+      return list.filter((d) => d.normalPriceUsd >= 39.99);
+    case "under50":
+      return [...list]
+        .filter((d) => toSar(d.salePriceUsd) <= 50)
+        .sort((a, b) => a.salePriceUsd - b.salePriceUsd);
+    case "topRated":
+      return [...list]
+        .filter((d) => (d.metacriticScore ?? 0) >= 80 || (d.steamRatingPercent ?? 0) >= 90)
+        .sort(
+          (a, b) =>
+            (b.metacriticScore ?? b.steamRatingPercent ?? 0) -
+            (a.metacriticScore ?? a.steamRatingPercent ?? 0),
+        );
+    case "new":
+      return [...list]
+        .filter((d) => d.releaseDate && now - d.releaseDate < YEAR * 2)
+        .sort((a, b) => (b.releaseDate ?? 0) - (a.releaseDate ?? 0));
+    default:
+      return list;
   }
-};
-
-/** دولار → سعر المنطقة الأوكرانية (UAH) */
-export const usdToUah = (usd: number, rates: Rates = FALLBACK_RATES) =>
-  usd * rates.usdToUah;
-
-/** هريفنيا أوكرانية → ريال سعودي */
-export const uahToSar = (uah: number, rates: Rates = FALLBACK_RATES) =>
-  uah * rates.uahToSar;
-
-/** السعر النهائي المعروض للمستخدم بالريال فقط */
-export const toSar = (usd: number, rates: Rates = FALLBACK_RATES) =>
-  uahToSar(usdToUah(usd, rates), rates);
-
-export const formatSar = (usd: number, rates: Rates = FALLBACK_RATES) =>
-  `${Math.round(toSar(usd, rates))} ر.س`;
+}
