@@ -122,7 +122,7 @@ export async function searchSteam(term: string): Promise<SteamItem[]> {
     return {
       appId: it.id,
       name: it.name,
-      image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+      image: storeImage(it),
       uahFinal: final,
       uahInitial: initial,
       discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,
@@ -272,7 +272,7 @@ export async function fetchBundles(): Promise<SteamItem[]> {
       out.push({
         appId: it.id,
         name: it.name,
-        image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+        image: storeImage(it),
         uahFinal: final,
         uahInitial: initial,
         discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,
