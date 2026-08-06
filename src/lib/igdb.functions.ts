@@ -58,3 +58,10 @@ export const resolveArtFn = createServerFn({ method: "POST" })
     const { artForName } = await import("./igdb-search.server");
     return { image: await artForName(data.name) };
   });
+
+export const shotsByNameFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { name: string }) => d)
+  .handler(async ({ data }) => {
+    const { shotsForName } = await import("./igdb-search.server");
+    return shotsForName(data.name);
+  });

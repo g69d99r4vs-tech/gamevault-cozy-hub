@@ -156,3 +156,15 @@ export async function artForName(name: string): Promise<string | null> {
   if (!hit) return null;
   return hit.background_image ?? null;
 }
+
+/** لقطات لعبة بالاسم — بديل ذكي عندما لا يوفّر المصدر الأساسي صورًا */
+export async function shotsForName(name: string) {
+  const clean = name.replace(/[™®©]/g, "").trim();
+  if (clean.length < 2) return [] as { id: number; image: string }[];
+  const list = await searchIgdb(clean, 3).catch(() => []);
+  for (const g of list) {
+    const shots = g.short_screenshots ?? [];
+    if (shots.length) return shots;
+  }
+  return [] as { id: number; image: string }[];
+}
