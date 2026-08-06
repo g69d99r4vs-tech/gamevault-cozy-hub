@@ -127,7 +127,7 @@ const strip = (html: string) =>
 
 export async function fetchDealDetails(dealID: string): Promise<StoreDealDetails> {
   const raw = await api<Record<string, unknown>>(
-    `/deals?id=${encodeURIComponent(dealID)}`,
+    `/deals?id=${dealID.includes("%") ? dealID : encodeURIComponent(dealID)}`,
   );
   const info = (raw["gameInfo"] ?? {}) as Record<string, unknown>;
   const cheapest = (raw["cheapestPrice"] ?? {}) as Record<string, unknown>;
