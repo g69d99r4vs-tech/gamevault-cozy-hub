@@ -48,6 +48,7 @@ type Item = {
   discount: number;
   isFree?: boolean;
   comingSoon?: boolean;
+  released?: string | null;
 };
 
 function PriceTag({ item }: { item: Item }) {
@@ -93,6 +94,11 @@ function GameCardStore({ item, index }: { item: Item; index: number }) {
         </div>
         <div className="space-y-1 p-3">
           <h3 className="line-clamp-2 text-sm font-bold leading-snug">{item.name}</h3>
+          {(item.released || item.comingSoon) && (
+            <p className="text-[11px] font-semibold text-muted-foreground">
+              {item.released ? new Date(item.released).getFullYear() : "قريباً"}
+            </p>
+          )}
           <PriceTag item={item} />
         </div>
       </Link>

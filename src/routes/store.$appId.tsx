@@ -3,6 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { ArrowRight, CalendarPlus, ExternalLink, Heart, Loader2 } from "lucide-react";
 import { steamDetailsFn } from "@/lib/steam.functions";
+import { shotsByNameFn } from "@/lib/igdb.functions";
+import { Lightbox } from "@/components/Lightbox";
+import { useState } from "react";
+import { GAME_PLACEHOLDER } from "@/lib/img";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/lib/store-favorites";
 import { buzz } from "@/lib/haptics";
@@ -53,6 +57,23 @@ function StoreGamePage() {
     queryKey: ["steam-details", appId],
     queryFn: () => steamDetailsFn({ data: { appId } }),
   });
+
+  const [shotIndex, setShotIndex] = useState<number | null>(null);
+
+  const fallbackShots = useQuery({
+    queryKey: ["steam-shots-fallback", appId, data?.name],
+    queryFn: () => shotsByNameFn({ data: { name: data?.name ?? "" } }),
+    enabled: !!data && !data.screenshots?.length && !!data.name,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const gallery: string[] = (() => {
+    const fromStore = data?.screenshots ?? [];
+    if (fromStore.length) return fromStore;
+    const fromIgdb = (fallbackShots.data ?? []).map((s) => s.image).filter(Boolean);
+    if (fromIgdb.length) return fromIgdb;
+    return [data?.image ?? image].filter(Boolean) as string[];
+  })();
 
   const plannedRelease = safeUpcomingDate(data?.released ?? null);
 
@@ -166,6 +187,38 @@ function StoreGamePage() {
               <CalendarPlus className="size-4" />
               {inPlan ? "في الإصدارات المرتقبة" : "إضافة للإصدارات المرتقبة"}
             </Button>
+
+            <section className="space-y-3 pt-2">
+              <h2 className="font-display text-lg font-bold">الصور</h2>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                {gallery.map((src, i) => (
+                  <button
+                    key={`${src}-${i}`}
+                    type="button"
+                    onClick={() => setShotIndex(i)}
+                    aria-label="عرض الصورة بملء الشاشة"
+                    className="overflow-hidden rounded-2xl surface-hover"
+                  >
+                    <img
+                      src={src}
+                      alt={data?.name ?? "لقطة من اللعبة"}
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = GAME_PLACEHOLDER;
+                      }}
+                      className="aspect-video w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              <Lightbox
+                images={gallery}
+                index={shotIndex}
+                alt={data?.name ?? "لقطة"}
+                onIndexChange={setShotIndex}
+                onClose={() => setShotIndex(null)}
+              />
+            </section>
 
             <div className="grid gap-3 pt-2 sm:grid-cols-2">
               <Button
