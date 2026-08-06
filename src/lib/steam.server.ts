@@ -15,6 +15,8 @@ export type SteamItem = {
   comingSoon?: boolean;
   /** YYYY-MM-DD أو null إذا لم يُعلن */
   released?: string | null;
+  /** app = لعبة عادية، sub = حزمة/باقة على ستيم */
+  kind?: "app" | "sub";
 };
 
 export type SteamDetails = SteamItem & {
@@ -84,8 +86,10 @@ type RawSearchItem = {
 
 type RawSearch = { items?: RawSearchItem[] };
 
+const ASSETS = "https://shared.akamai.steamstatic.com/store_item_assets/steam";
+
 /**
- * ستيم يخزّن صور الحزم (bundle/sub) في مسارات مختلفة عن الألعاب (apps).
+ * ستيم يخزّن صور الحزم (bundle/sub/package) تحت مسار subs وليس apps.
  * نرقّي الصورة المصغّرة إلى غلاف كامل، وإلا نبني رابط CDN حسب النوع.
  */
 export const storeImage = (it: { id: number; type?: string; tiny_image?: string }) => {
@@ -97,12 +101,11 @@ export const storeImage = (it: { id: number; type?: string; tiny_image?: string 
       .replace("capsule_184x69", "header");
     if (full) return full.startsWith("//") ? `https:${full}` : full;
   }
-  const cdn = "https://cdn.akamai.steamstatic.com/steam";
   const kind = (it.type ?? "app").toLowerCase();
-  if (kind === "bundle") return `${cdn}/bundles/${it.id}/header_586x192.jpg`;
-  if (kind === "sub" || kind === "package") return `${cdn}/subs/${it.id}/header.jpg`;
-  return `${cdn}/apps/${it.id}/header.jpg`;
+  if (kind === "app") return `${ASSETS}/apps/${it.id}/header.jpg`;
+  return `${ASSETS}/subs/${it.id}/header.jpg`;
 };
+
 
 const parseDate = (raw: string | undefined | null) => {
   const parsed = raw ? new Date(raw) : null;
@@ -123,6 +126,7 @@ export async function searchSteam(term: string): Promise<SteamItem[]> {
       appId: it.id,
       name: it.name,
       image: storeImage(it),
+      kind: (it.type ?? "app").toLowerCase() === "app" ? ("app" as const) : ("sub" as const),
       uahFinal: final,
       uahInitial: initial,
       discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,
@@ -179,6 +183,7 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
 
   return {
     appId,
+    kind: "app",
     name: d.name,
     image:
       d.header_image ?? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`,
@@ -193,6 +198,58 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     released,
     comingSoon: Boolean(d.release_date?.coming_soon),
   };
+}
+
+/** تفاصيل حزمة/باقة على ستيم (packagedetails) */
+export async function fetchPackageDetails(packageId: number): Promise<SteamDetails | null> {
+  const data = (await safeJson(
+    `https://store.steampowered.com/api/packagedetails?packageids=${packageId}&cc=${CC}&l=arabic`,
+  )) as Record<string, { success?: boolean; data?: Record<string, unknown> }>;
+
+  const node = data[String(packageId)];
+  if (!node?.success || !node.data) return null;
+  const d = node.data as {
+    name?: string;
+    page_image?: string;
+    header_image?: string;
+    small_logo?: string;
+    apps?: { id: number; name: string }[];
+    price?: { initial?: number; final?: number; discount_percent?: number };
+    release_date?: { coming_soon?: boolean; date?: string };
+  };
+
+  const apps = d.apps ?? [];
+  const shots = [
+    d.header_image,
+    d.page_image,
+    ...apps.map((a) => `${ASSETS}/apps/${a.id}/header.jpg`),
+  ].filter(Boolean) as string[];
+
+  return {
+    appId: packageId,
+    kind: "sub",
+    name: d.name ?? `حزمة ${packageId}`,
+    image: d.header_image ?? d.page_image ?? `${ASSETS}/subs/${packageId}/header.jpg`,
+    uahFinal: d.price?.final ?? 0,
+    uahInitial: d.price?.initial ?? d.price?.final ?? 0,
+    discount: d.price?.discount_percent ?? 0,
+    isFree: false,
+    description: apps.length
+      ? `حزمة تضم ${apps.length} لعبة: ${apps.map((a) => a.name).join("، ")}.`
+      : "حزمة من متجر ستيم.",
+    screenshots: Array.from(new Set(shots)),
+    developers: [],
+    genres: apps.length ? ["حزمة"] : [],
+    released: parseDate(d.release_date?.date),
+    comingSoon: Boolean(d.release_date?.coming_soon),
+  };
+}
+
+/** يجلب التفاصيل سواء كان المعرف للعبة أو لحزمة */
+export async function fetchStoreDetails(id: number): Promise<SteamDetails | null> {
+  const app = await fetchAppDetails(id).catch(() => null);
+  if (app) return app;
+  return fetchPackageDetails(id).catch(() => null);
 }
 
 /** أرفف المتجر مصنّفة (عروض / الأكثر مبيعًا / وصل حديثًا) */
@@ -265,7 +322,8 @@ export async function fetchBundles(): Promise<SteamItem[]> {
   const out: SteamItem[] = [];
   for (const items of lists) {
     for (const it of items) {
-      if (!it.id || seen.has(it.id) || !BUNDLE_RE.test(it.name)) continue;
+      const isPackage = (it.type ?? "app").toLowerCase() !== "app";
+      if (!it.id || seen.has(it.id) || !(isPackage || BUNDLE_RE.test(it.name))) continue;
       seen.add(it.id);
       const final = it.price?.final ?? 0;
       const initial = it.price?.initial ?? final;
@@ -273,6 +331,7 @@ export async function fetchBundles(): Promise<SteamItem[]> {
         appId: it.id,
         name: it.name,
         image: storeImage(it),
+      kind: (it.type ?? "app").toLowerCase() === "app" ? ("app" as const) : ("sub" as const),
         uahFinal: final,
         uahInitial: initial,
         discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,

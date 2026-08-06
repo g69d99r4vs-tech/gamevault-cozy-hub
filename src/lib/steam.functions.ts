@@ -23,9 +23,9 @@ export const steamSearchFn = createServerFn({ method: "GET" })
 export const steamDetailsFn = createServerFn({ method: "GET" })
   .inputValidator((d: { appId: number }) => ({ appId: Number(d?.appId) }))
   .handler(async ({ data }) => {
-    const { fetchAppDetails } = await import("./steam.server");
+    const { fetchStoreDetails } = await import("./steam.server");
     try {
-      return await fetchAppDetails(data.appId);
+      return await fetchStoreDetails(data.appId);
     } catch {
       return null;
     }
@@ -34,9 +34,9 @@ export const steamDetailsFn = createServerFn({ method: "GET" })
 export const steamShotsFn = createServerFn({ method: "GET" })
   .inputValidator((d: { appId: number }) => ({ appId: Number(d?.appId) }))
   .handler(async ({ data }) => {
-    const { fetchAppDetails } = await import("./steam.server");
+    const { fetchStoreDetails } = await import("./steam.server");
     try {
-      return (await fetchAppDetails(data.appId))?.screenshots ?? [];
+      return (await fetchStoreDetails(data.appId))?.screenshots ?? [];
     } catch {
       return [];
     }
