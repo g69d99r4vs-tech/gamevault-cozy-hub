@@ -443,17 +443,17 @@ function StorePage() {
             </section>
           ) : (
             <Shelf
-              title="🔥 عروض مميزة"
+              title="عروض مميزة"
               subtitle="أسعار ستيم محوّلة للريال السعودي"
               items={specials.slice(0, 18)}
             />
           )}
 
-          <Shelf title="🏆 الأكثر مبيعاً" subtitle="اختيارات ستيم الرائجة" items={topSellers} />
-          <Shelf title="✨ وصل حديثاً" subtitle="أحدث الإصدارات على ستيم" items={newReleases} />
+          <Shelf title="الأكثر مبيعاً" subtitle="اختيارات ستيم الرائجة" items={topSellers} />
+          <Shelf title="وصل حديثاً" subtitle="أحدث الإصدارات على ستيم" items={newReleases} />
 
           <section className="space-y-3">
-            <SectionTitle title="📦 عروض الحزم" subtitle="حزم وإصدارات ديلوكس وألتيميت" />
+            <SectionTitle title="عروض الحزم" subtitle="حزم وإصدارات ديلوكس وألتيميت" />
             {bundles.isLoading ? (
               loadingRow
             ) : bundleItems.length ? (
