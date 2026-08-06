@@ -135,4 +135,3 @@ function ErrorBox() {
   );
 }
 
-export { Loader2 };
