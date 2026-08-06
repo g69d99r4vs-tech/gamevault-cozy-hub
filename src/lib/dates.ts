@@ -19,10 +19,12 @@ export const hijri = (date: string | Date | null | undefined, fallback = "—") 
   try {
     const parts = hijriFmt.formatToParts(d);
     const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-    const y = get("year").replace(/[^\d]/g, "");
-    const m = get("month").replace(/[^\d]/g, "").padStart(2, "0");
-    const day = get("day").replace(/[^\d]/g, "").padStart(2, "0");
-    return `${day}/${m}/${y}`;
+    const y = Number(get("year").replace(/[^\d]/g, ""));
+    const m = Number(get("month").replace(/[^\d]/g, ""));
+    const day = Number(get("day").replace(/[^\d]/g, ""));
+    // لا نسمح أبدًا بأصفار أو قيم غير صالحة
+    if (!y || !m || !day || m > 12 || day > 30) return fallback;
+    return `${String(day).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
   } catch {
     return fallback;
   }
@@ -66,3 +68,23 @@ export const dayMonth = (date: string | Date | null | undefined, fallback = "—
   return h.split("/").slice(0, 2).join("/");
 };
 
+
+/** يضيف عددًا من الأشهر لتاريخ اليوم ويرجع YYYY-MM-DD */
+export const monthsFromNow = (months: number) => {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+};
+
+/** هل التاريخ صالح ولم يمضِ بعد؟ */
+export const isFuture = (date: string | Date | null | undefined) => {
+  const d = toDate(date);
+  return !!d && d.getTime() > Date.now();
+};
+
+/**
+ * تاريخ إصدار آمن للألعاب المرتقبة: لو التاريخ ناقص أو ماضٍ
+ * نستخدم موعدًا افتراضيًا بعد 3 أشهر بدل وسمها كـ«صدرت بالفعل».
+ */
+export const safeUpcomingDate = (date: string | null | undefined, fallbackMonths = 3) =>
+  isFuture(date) ? (date as string) : monthsFromNow(fallbackMonths);
