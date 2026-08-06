@@ -17,15 +17,10 @@ import { activityIcon, gameOfMonth, memoryBox, computeStats, computeLevel } from
 import { hijri, num } from "@/lib/dates";
 import { SectionTitle } from "@/components/ui-bits";
 import { LogSessionSheet } from "@/components/GameEditDialog";
-import { Rail, PosterCard } from "@/components/Rail";
 import { CelebrationModal } from "@/components/CelebrationModal";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getRecommended } from "@/lib/rawg";
-import { buzz } from "@/lib/haptics";
-import { toast } from "sonner";
 import heroFallback from "@/assets/hero-fallback.jpg";
 
 
@@ -69,49 +64,10 @@ function Dashboard() {
   const users = useStore((s) => s.users);
   const currentUser = useStore((s) => s.currentUser);
   const updateGame = useStore((s) => s.updateGame);
-  const addGame = useStore((s) => s.addGame);
 
 
   const hero = data.entries.find((e) => e.status === "current") ?? null;
   const [reviewed, setReviewed] = useState<GameEntry | null>(null);
-
-  /** أنواع الألعاب المكتملة — أساس التوصيات */
-  const topGenres = useMemo(() => {
-    const count = new Map<string, number>();
-    for (const e of data.entries.filter((x) => x.status === "completed"))
-      for (const g of e.genres) count.set(g, (count.get(g) ?? 0) + 1);
-    return [...count.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([g]) => g.toLowerCase().replace(/\s+/g, "-"));
-  }, [data.entries]);
-
-  /** كل لعبة مملوكة مستبعدة، بما فيها اللعب الحالي والانتظار والمكتملة. */
-  const ownedIds = useMemo(() => data.entries.map((entry) => entry.id), [data.entries]);
-  const ownedNames = useMemo(() => data.entries.map((entry) => entry.name), [data.entries]);
-
-  const { data: recommended = [] } = useQuery({
-    queryKey: ["recommended", topGenres, ownedIds, ownedNames],
-    queryFn: () => getRecommended(topGenres, { ids: ownedIds, names: ownedNames }),
-    staleTime: 1000 * 60 * 30,
-  });
-
-  const owned = useMemo(() => new Set(ownedIds), [ownedIds]);
-  const ownedByName = useMemo(
-    () => new Set(ownedNames.map((name) => name.trim().toLocaleLowerCase())),
-    [ownedNames],
-  );
-  const trending = useMemo(
-    () =>
-      recommended
-        .filter(
-          (game) =>
-            !owned.has(game.id) &&
-            !ownedByName.has(game.name.trim().toLocaleLowerCase()),
-        )
-        .slice(0, 14),
-    [recommended, owned, ownedByName],
-  );
 
   const gotm = gameOfMonth(data.entries);
   const memories = memoryBox(data.entries);
@@ -158,16 +114,6 @@ function Dashboard() {
     return pool[seed % pool.length]!;
   }, [data.entries, currentUser]);
 
-  const [picked, setPicked] = useState<GameEntry | null>(null);
-  const pickRandomPlan = () => {
-    const pool = data.entries.filter((e) => e.status === "backlog");
-    if (!pool.length) {
-      toast("قائمة «ناوي أختمها» فاضية — أضف ألعاب من الخطة أولاً");
-      return;
-    }
-    buzz(40);
-    setPicked(pool[Math.floor(Math.random() * pool.length)]!);
-  };
 
   const [quoteIdx, setQuoteIdx] = useState(0);
   useEffect(() => setQuoteIdx(new Date().getDate() % QUOTES.length), []);
@@ -175,12 +121,9 @@ function Dashboard() {
   /** بانر سينمائي: صورة اللعبة الحالية، وإلا كولاج من المقترحات، وإلا صورة احتياطية */
   const bannerImages = useMemo(() => {
     if (hero?.image) return [hero.image];
-    const pool = [
-      ...data.entries.map((e) => e.image),
-      ...trending.map((g) => g.background_image),
-    ].filter((x): x is string => !!x);
+    const pool = data.entries.map((e) => e.image).filter((x): x is string => !!x);
     return pool.slice(0, 3).length === 3 ? pool.slice(0, 3) : pool.slice(0, 1);
-  }, [hero, data.entries, trending]);
+  }, [hero, data.entries]);
   const quick = [
     { icon: Trophy, label: "مكتملة", value: num(stats.completed) },
     { icon: Zap, label: "المستوى", value: num(level) },
@@ -263,12 +206,11 @@ function Dashboard() {
               <p className="text-xs text-muted-foreground">ما فيه لعبة قيد اللعب</p>
               <h2 className="font-display text-2xl font-black md:text-3xl">ابدأ رحلتك الجديدة اليوم</h2>
               <p className="text-xs text-muted-foreground">{quote}</p>
-              <Button
-                onClick={pickRandomPlan}
-                className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]"
-              >
-                <Plus className="size-4" /> اختر لعبة من الخطة
-              </Button>
+              <Link to="/upcoming" search={{ tab: "toBeat" as const }}>
+                <Button className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]">
+                  <Plus className="size-4" /> اختر لعبة من الخطة
+                </Button>
+              </Link>
 
             </>
           )}
@@ -277,36 +219,6 @@ function Dashboard() {
 
       {/* صفوف سينمائية أفقية */}
       <CelebrationModal game={reviewed} review onClose={() => setReviewed(null)} />
-
-      {!!trending.length && (
-        <Rail
-          title="الأكثر رواجاً"
-          subtitle={
-            topGenres.length ? "مقترحات تناسب أنواع ألعابك المختومة" : "أفضل الألعاب تقييمًا"
-          }
-        >
-          {trending.map((g, i) => (
-            <PosterCard
-              key={g.id}
-              entry={
-                {
-                  id: g.id,
-                  name: g.name,
-                  image: g.background_image,
-                  genres: (g.genres ?? []).map((x) => x.name),
-                } as unknown as GameEntry
-              }
-              index={i}
-              quickLabel="أضفها للخطة"
-              onQuick={() => {
-                buzz(40);
-                addGame(g, "backlog");
-                toast.success(`«${g.name}» أُضيفت إلى الخطة`);
-              }}
-            />
-          ))}
-        </Rail>
-      )}
 
 
       {/* B — تحدي الأسبوع */}
@@ -492,50 +404,6 @@ function Dashboard() {
         </p>
       </Link>
 
-      <AnimatePresence>
-        {picked && (
-          <motion.div
-            dir="rtl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setPicked(null)}
-            className="fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 300, damping: 24 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
-            >
-              <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
-                وش نلعب اليوم؟
-              </p>
-              {picked.image && (
-                <img
-                  src={picked.image}
-                  alt={picked.name}
-                  className="aspect-video w-full object-cover"
-                />
-              )}
-              <div className="space-y-4 p-5">
-                <h3 className="font-display text-2xl font-black">{picked.name}</h3>
-                <Button
-                  onClick={() => {
-                    buzz(30);
-                    setPicked(null);
-                  }}
-                  className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
-                >
-                  يلا نلعب!
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
