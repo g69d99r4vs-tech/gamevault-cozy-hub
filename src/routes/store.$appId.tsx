@@ -29,7 +29,14 @@ export const Route = createFileRoute("/store/$appId")({
 
 const UAH_TO_SAR = 0.091;
 const toSar = (cents: number) => Math.round((cents / 100) * UAH_TO_SAR);
-const sarLabel = (cents: number) => (cents > 0 ? `${toSar(cents)} ريال` : "مجانية");
+const sarLabel = (
+  cents: number,
+  opts: { isFree?: boolean; comingSoon?: boolean } = {},
+) => {
+  if (cents > 0) return `${toSar(cents)} ريال`;
+  if (opts.comingSoon) return "قريباً";
+  return opts.isFree ? "مجانية" : "قريباً";
+};
 
 function StoreGamePage() {
   const { appId: raw } = Route.useParams();
@@ -91,7 +98,10 @@ function StoreGamePage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-2xl bg-primary/12 px-4 py-2 font-display text-xl font-black text-primary">
-                {sarLabel(data?.uahFinal ?? 0)}
+                {sarLabel(data?.uahFinal ?? 0, {
+                  isFree: data?.isFree,
+                  comingSoon: data?.comingSoon,
+                })}
               </span>
               {!!data?.discount && (
                 <span className="rounded-xl bg-primary px-2 py-1 text-[11px] font-black text-primary-foreground">

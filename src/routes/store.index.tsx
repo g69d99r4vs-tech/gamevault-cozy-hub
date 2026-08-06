@@ -30,7 +30,14 @@ export const Route = createFileRoute("/store/")({
 /** 1 هريفنيا أوكرانية = 0.091 ريال سعودي */
 const UAH_TO_SAR = 0.091;
 export const toSar = (cents: number) => Math.round((cents / 100) * UAH_TO_SAR);
-export const sarLabel = (cents: number) => (cents > 0 ? `${toSar(cents)} ريال` : "مجانية");
+export const sarLabel = (
+  cents: number,
+  opts: { isFree?: boolean; comingSoon?: boolean } = {},
+) => {
+  if (cents > 0) return `${toSar(cents)} ريال`;
+  if (opts.comingSoon) return "قريباً";
+  return opts.isFree ? "مجانية" : "قريباً";
+};
 
 type Item = {
   appId: number;
@@ -39,6 +46,8 @@ type Item = {
   uahFinal: number;
   uahInitial: number;
   discount: number;
+  isFree?: boolean;
+  comingSoon?: boolean;
 };
 
 function PriceTag({ item }: { item: Item }) {
@@ -50,7 +59,7 @@ function PriceTag({ item }: { item: Item }) {
         </span>
       )}
       <span className="font-display text-base font-black text-primary">
-        {sarLabel(item.uahFinal)}
+        {sarLabel(item.uahFinal, { isFree: item.isFree, comingSoon: item.comingSoon })}
       </span>
     </div>
   );
@@ -139,7 +148,7 @@ function HeroCarousel({ items }: { items: Item[] }) {
             </span>
           )}
           <span className="font-display text-xl font-black text-primary">
-            {sarLabel(item.uahFinal)}
+            {sarLabel(item.uahFinal, { isFree: item.isFree, comingSoon: item.comingSoon })}
           </span>
         </div>
       </button>
