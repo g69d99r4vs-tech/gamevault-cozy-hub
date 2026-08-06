@@ -7,7 +7,7 @@ import { Bookmark, BookmarkCheck, Newspaper, Clock, ChevronDown, Trash2 } from "
 import { listNewsFn } from "@/lib/news.functions";
 import type { NewsPost } from "@/lib/news.server";
 import { useNewsStore } from "@/lib/news-store";
-import { tap } from "@/lib/haptics";
+import { buzz } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/news")({
@@ -40,7 +40,7 @@ function PostCard({ post }: { post: NewsPost }) {
     <motion.article
       layout
       onClick={() => {
-        tap();
+        buzz();
         setOpen((v) => !v);
       }}
       className="cursor-pointer border-b border-border/60 px-4 py-4 transition-colors hover:bg-secondary/30"
@@ -104,7 +104,7 @@ function PostCard({ post }: { post: NewsPost }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                tap();
+                buzz();
                 toggleSave(post);
               }}
               className={cn(
@@ -160,7 +160,7 @@ function NewsPage() {
             key={v}
             type="button"
             onClick={() => {
-              tap();
+              buzz();
               setTab(v);
             }}
             className={cn(
@@ -178,7 +178,7 @@ function NewsPage() {
           <button
             type="button"
             onClick={() => {
-              tap();
+              buzz();
               clearSaved();
             }}
             className="inline-flex items-center gap-1 rounded-full bg-secondary/60 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
