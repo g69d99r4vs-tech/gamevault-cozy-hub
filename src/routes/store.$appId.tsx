@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/lib/store-favorites";
 import { buzz } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
-import { onImgError, safeImg } from "@/lib/img";
+import { safeImg } from "@/lib/img";
+import { SmartImage } from "@/components/SmartImage";
 import { useStore } from "@/lib/store";
-import { hijri } from "@/lib/dates";
+import { hijri, safeUpcomingDate, isFuture } from "@/lib/dates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/store/$appId")({
@@ -46,6 +47,8 @@ function StoreGamePage() {
     queryFn: () => steamDetailsFn({ data: { appId } }),
   });
 
+  const plannedRelease = safeUpcomingDate(data?.released ?? null);
+
   const image =
     data?.image ?? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
 
@@ -70,7 +73,12 @@ function StoreGamePage() {
           animate={{ opacity: 1, y: 0 }}
           className="overflow-hidden rounded-[2rem] border-2 border-yellow-500/25 bg-card shadow-[0_0_45px_-22px_rgba(234,179,8,0.9)]"
         >
-          <img src={safeImg(image)} onError={onImgError} alt={data?.name ?? "غلاف اللعبة"} className="aspect-[460/215] w-full object-cover" />
+          <SmartImage
+            src={data?.image ?? image}
+            name={data?.name ?? `App ${appId}`}
+            alt={data?.name ?? "غلاف اللعبة"}
+            className="aspect-[460/215] w-full object-cover"
+          />
         </motion.div>
 
         {isLoading ? (
@@ -127,7 +135,7 @@ function StoreGamePage() {
                     id: gameId,
                     slug: `steam-${appId}`,
                     name: data?.name ?? `App ${appId}`,
-                    released: data?.released ?? null,
+                    released: plannedRelease,
                     background_image: image,
                     rating: 0,
                     metacritic: null,
@@ -136,7 +144,11 @@ function StoreGamePage() {
                   },
                   "hype",
                 );
-                toast.success("أُضيفت إلى الإصدارات المرتقبة");
+                toast.success(
+                  isFuture(data?.released)
+                    ? "أُضيفت إلى الإصدارات المرتقبة"
+                    : "أُضيفت بموعد تقديري (بعد 3 أشهر) — عدّله متى ما أُعلن",
+                );
               }}
               disabled={inPlan}
               className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary/15 font-display text-base font-black text-primary hover:bg-primary/25"

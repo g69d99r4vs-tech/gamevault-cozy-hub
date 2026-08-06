@@ -18,7 +18,12 @@ export function Countdown({
   }, []);
 
   const c = countdown(target, now);
-  if (!c) return <span className="text-xs text-muted-foreground">صدرت بالفعل</span>;
+  if (!c)
+    return (
+      <span className="text-xs text-muted-foreground">
+        {target ? "صدرت بالفعل" : "لم يُعلن الموعد بعد"}
+      </span>
+    );
 
   const parts = [
     { v: c.days, l: "يوم" },
