@@ -17,13 +17,10 @@ import { activityIcon, gameOfMonth, memoryBox, computeStats, computeLevel } from
 import { hijri, num } from "@/lib/dates";
 import { SectionTitle } from "@/components/ui-bits";
 import { LogSessionSheet } from "@/components/GameEditDialog";
-import { Rail, PosterCard } from "@/components/Rail";
 import { CelebrationModal } from "@/components/CelebrationModal";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getRecommended } from "@/lib/rawg";
 import { buzz } from "@/lib/haptics";
 import { toast } from "sonner";
 import heroFallback from "@/assets/hero-fallback.jpg";
@@ -69,26 +66,10 @@ function Dashboard() {
   const users = useStore((s) => s.users);
   const currentUser = useStore((s) => s.currentUser);
   const updateGame = useStore((s) => s.updateGame);
-  const addGame = useStore((s) => s.addGame);
 
 
   const hero = data.entries.find((e) => e.status === "current") ?? null;
   const [reviewed, setReviewed] = useState<GameEntry | null>(null);
-
-  /** أنواع الألعاب المكتملة — أساس التوصيات */
-  const topGenres = useMemo(() => {
-    const count = new Map<string, number>();
-    for (const e of data.entries.filter((x) => x.status === "completed"))
-      for (const g of e.genres) count.set(g, (count.get(g) ?? 0) + 1);
-    return [...count.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([g]) => g.toLowerCase().replace(/\s+/g, "-"));
-  }, [data.entries]);
-
-  /** كل لعبة مملوكة مستبعدة، بما فيها اللعب الحالي والانتظار والمكتملة. */
-  const ownedIds = useMemo(() => data.entries.map((entry) => entry.id), [data.entries]);
-  const ownedNames = useMemo(() => data.entries.map((entry) => entry.name), [data.entries]);
 
   const gotm = gameOfMonth(data.entries);
   const memories = memoryBox(data.entries);
