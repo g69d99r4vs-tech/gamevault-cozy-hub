@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useCurrentData, useOtherData, useStore, type GameEntry } from "@/lib/store";
 import { activityIcon, gameOfMonth, memoryBox, computeStats, computeLevel } from "@/lib/stats";
-import { hijri, num } from "@/lib/dates";
+import { gdate, num } from "@/lib/dates";
 import { SectionTitle } from "@/components/ui-bits";
 import { LogSessionSheet } from "@/components/GameEditDialog";
 import { CelebrationModal } from "@/components/CelebrationModal";
@@ -375,7 +375,7 @@ function Dashboard() {
                   <p className="truncate">
                     {activityIcon(a.type)} <span className="font-bold">{a.who}</span> {a.text}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">{hijri(a.at)}</p>
+                  <p className="text-[11px] text-muted-foreground">{gdate(a.at)}</p>
                 </div>
               </div>
             ))

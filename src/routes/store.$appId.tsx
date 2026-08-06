@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { safeImg } from "@/lib/img";
 import { SmartImage } from "@/components/SmartImage";
 import { useStore } from "@/lib/store";
-import { hijri, safeUpcomingDate, isFuture } from "@/lib/dates";
+import { gdate, safeUpcomingDate, isFuture } from "@/lib/dates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/store/$appId")({
@@ -116,7 +116,7 @@ function StoreGamePage() {
             )}
 
             {!!data?.released && (
-              <p className="text-xs text-muted-foreground">تاريخ الإصدار: {hijri(data.released)}</p>
+              <p className="text-xs text-muted-foreground">تاريخ الإصدار: {gdate(data.released)}</p>
             )}
 
             {!!data?.developers?.length && (

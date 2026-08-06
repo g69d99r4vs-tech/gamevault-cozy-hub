@@ -18,7 +18,6 @@ export const gdate = (date: string | Date | null | undefined, fallback = "—") 
 };
 
 /** أسماء قديمة للتوافق — كلها ميلادية رقمية الآن */
-export const hijri = gdate;
 export const gregorian = (date: string | Date | null | undefined) => gdate(date, "غير معلن");
 
 export const num = (n: number, digits = 0) =>

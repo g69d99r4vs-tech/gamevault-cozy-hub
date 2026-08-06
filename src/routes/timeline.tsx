@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useCurrentData, useOtherData, useStore } from "@/lib/store";
 import { activityIcon } from "@/lib/stats";
-import { hijri } from "@/lib/dates";
+import { gdate } from "@/lib/dates";
 import { SectionTitle, EmptyState } from "@/components/ui-bits";
 
 export const Route = createFileRoute("/timeline")({
@@ -55,7 +55,7 @@ function TimelinePage() {
                     <span className="font-bold">{a.who.name}</span> {a.text}
                   </p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {activityIcon(a.type)} {hijri(a.at)}
+                    {activityIcon(a.type)} {gdate(a.at)}
                   </p>
                 </div>
               </div>
