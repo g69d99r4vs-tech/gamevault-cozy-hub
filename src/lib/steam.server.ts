@@ -9,6 +9,10 @@ export type SteamItem = {
   uahFinal: number; // بالسنت
   uahInitial: number;
   discount: number;
+  /** true فقط إذا أكد المتجر أن اللعبة مجانية */
+  isFree?: boolean;
+  /** true إذا كانت اللعبة لم تصدر بعد */
+  comingSoon?: boolean;
 };
 
 export type SteamDetails = SteamItem & {
@@ -59,6 +63,7 @@ export async function fetchSpecials(): Promise<SteamItem[]> {
         uahFinal: it.final_price ?? 0,
         uahInitial: it.original_price ?? it.final_price ?? 0,
         discount: it.discount_percent ?? 0,
+        isFree: false,
       });
     }
   }
@@ -91,6 +96,7 @@ export async function searchSteam(term: string): Promise<SteamItem[]> {
       uahFinal: final,
       uahInitial: initial,
       discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,
+      isFree: false,
     };
   });
 }
@@ -128,6 +134,7 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     uahFinal: d.price_overview?.final ?? 0,
     uahInitial: d.price_overview?.initial ?? d.price_overview?.final ?? 0,
     discount: d.price_overview?.discount_percent ?? 0,
+    isFree: Boolean(d.is_free),
     description: strip(d.short_description ?? ""),
     developers: d.developers ?? [],
     genres: (d.genres ?? []).map((g) => g.description),
