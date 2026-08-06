@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flame, Tag, Loader2, ShoppingBag } from "lucide-react";
+import { Flame, Tag, ShoppingBag } from "lucide-react";
 import { getTopDeals, getSaleDeals, getRates, formatSar, FALLBACK_RATES, type Deal } from "@/lib/deals";
 import { SectionTitle } from "@/components/ui-bits";
+
 
 export const Route = createFileRoute("/store/")({
   head: () => ({
