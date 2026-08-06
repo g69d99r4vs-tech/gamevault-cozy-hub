@@ -1,3 +1,4 @@
+import { SmartImage } from "@/components/SmartImage";
 import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { GripVertical, Heart, Star } from "lucide-react";
@@ -34,16 +35,12 @@ export function GameCard({
       <Link to="/game/$id" params={{ id: String(entry.id) }} className="block">
 
         <div className="relative aspect-[16/10] overflow-hidden">
-          {entry.image ? (
-            <img
-              src={entry.image}
-              alt={entry.name}
-              loading="lazy"
-              className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-          ) : (
-            <div className="size-full bg-secondary" />
-          )}
+          <SmartImage
+            src={entry.image}
+            name={entry.name}
+            alt={entry.name}
+            className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
           {entry.coop && (
             <span className="absolute right-3 top-3 rounded-full bg-background/75 px-2 py-1 text-[11px] font-bold backdrop-blur">

@@ -51,3 +51,10 @@ export const getRecommendedFn = createServerFn({ method: "POST" })
     const { recommendedGames } = await import("./igdb-search.server");
     return recommendedGames(data.genres ?? [], data.ids ?? [], data.names ?? []);
   });
+
+export const resolveArtFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { name: string }) => d)
+  .handler(async ({ data }) => {
+    const { artForName } = await import("./igdb-search.server");
+    return { image: await artForName(data.name) };
+  });

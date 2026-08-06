@@ -6,7 +6,7 @@ import { Countdown } from "@/components/Countdown";
 import { hijri, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { buzz } from "@/lib/haptics";
-import { onImgError } from "@/lib/img";
+import { SmartImage } from "@/components/SmartImage";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import { Trash2, ChevronDown, ChevronUp, GripVertical, Star, Dices } from "lucide-react";
@@ -126,15 +126,12 @@ function PlanPage() {
                   params={{ id: String(g.id) }}
                   className="block aspect-[16/9] w-full overflow-hidden bg-secondary"
                 >
-                  {g.image ? (
-                    <img
-                      src={g.image}
-                      alt={g.name}
-                      loading="lazy"
-                      onError={onImgError}
-                      className="size-full object-cover"
-                    />
-                  ) : null}
+                  <SmartImage
+                    src={g.image}
+                    name={g.name}
+                    alt={g.name}
+                    className="size-full object-cover"
+                  />
                 </Link>
 
                 <div className="flex flex-col gap-3 p-4">
@@ -207,15 +204,12 @@ function PlanPage() {
                 params={{ id: String(e.id) }}
                 className="flex min-w-0 flex-1 items-start gap-4"
               >
-                {e.image && (
-                  <img
-                    src={e.image}
-                    alt={e.name}
-                    loading="lazy"
-                    onError={onImgError}
-                    className="h-24 w-20 shrink-0 rounded-2xl object-cover"
-                  />
-                )}
+                <SmartImage
+                  src={e.image}
+                  name={e.name}
+                  alt={e.name}
+                  className="h-24 w-20 shrink-0 rounded-2xl object-cover"
+                />
                 <div className="min-w-0 flex-1 space-y-1.5 py-0.5">
                   <p className="line-clamp-2 whitespace-normal break-words font-display text-base font-black leading-snug">
                     <bdi>{e.name}</bdi>
