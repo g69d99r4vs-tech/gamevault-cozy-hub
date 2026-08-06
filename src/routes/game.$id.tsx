@@ -13,6 +13,7 @@ import { Countdown } from "@/components/Countdown";
 import { motion } from "motion/react";
 import { ExternalLink } from "lucide-react";
 import { Lightbox } from "@/components/Lightbox";
+import placeholder from "@/assets/game-placeholder.jpg";
 
 export const Route = createFileRoute("/game/$id")({
   head: () => ({
