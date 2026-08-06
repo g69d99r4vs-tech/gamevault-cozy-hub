@@ -41,3 +41,21 @@ export const steamShotsFn = createServerFn({ method: "GET" })
       return [];
     }
   });
+
+export const steamShelvesFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchShelves } = await import("./steam.server");
+  try {
+    return await fetchShelves();
+  } catch {
+    return { specials: [], topSellers: [], newReleases: [], comingSoon: [] };
+  }
+});
+
+export const steamBundlesFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { fetchBundles } = await import("./steam.server");
+  try {
+    return await fetchBundles();
+  } catch {
+    return [];
+  }
+});

@@ -173,3 +173,87 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     comingSoon: Boolean(d.release_date?.coming_soon),
   };
 }
+
+/** أرفف المتجر مصنّفة (عروض / الأكثر مبيعًا / وصل حديثًا) */
+export type StoreShelves = {
+  specials: SteamItem[];
+  topSellers: SteamItem[];
+  newReleases: SteamItem[];
+  comingSoon: SteamItem[];
+};
+
+const mapBucket = (items: RawSpecial[] | undefined): SteamItem[] =>
+  (items ?? [])
+    .filter((it) => Boolean(it?.id))
+    .map((it) => ({
+      appId: it.id,
+      name: it.name,
+      image:
+        it.header_image ??
+        it.large_capsule_image ??
+        `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+      uahFinal: it.final_price ?? 0,
+      uahInitial: it.original_price ?? it.final_price ?? 0,
+      discount: it.discount_percent ?? 0,
+      isFree: false,
+    }));
+
+export async function fetchShelves(): Promise<StoreShelves> {
+  const data = (await safeJson(
+    `https://store.steampowered.com/api/featuredcategories?cc=${CC}&l=arabic`,
+  )) as Record<string, { items?: RawSpecial[] }>;
+
+  return {
+    specials: mapBucket(data["specials"]?.items),
+    topSellers: mapBucket(data["top_sellers"]?.items),
+    newReleases: mapBucket(data["new_releases"]?.items),
+    comingSoon: mapBucket(data["coming_soon"]?.items).map((x) => ({ ...x, comingSoon: true })),
+  };
+}
+
+/** حزم وإصدارات خاصة: نبحث بمصطلحات الحزم ونُبقي المطابق فقط */
+const BUNDLE_TERMS = [
+  "bundle",
+  "deluxe edition",
+  "ultimate edition",
+  "gold edition",
+  "collection",
+  "complete edition",
+];
+
+const BUNDLE_RE = /\b(bundle|pack|deluxe|ultimate|gold|complete|collection|definitive|anthology|edition)\b/i;
+
+export async function fetchBundles(): Promise<SteamItem[]> {
+  const lists = await Promise.all(
+    BUNDLE_TERMS.map((t) =>
+      safeJson(
+        `https://store.steampowered.com/api/storesearch?term=${encodeURIComponent(t)}&cc=${CC}&l=arabic`,
+      )
+        .then((d) => (d as RawSearch).items ?? [])
+        .catch(() => []),
+    ),
+  );
+
+  const seen = new Set<number>();
+  const out: SteamItem[] = [];
+  for (const items of lists) {
+    for (const it of items) {
+      if (!it.id || seen.has(it.id) || !BUNDLE_RE.test(it.name)) continue;
+      seen.add(it.id);
+      const final = it.price?.final ?? 0;
+      const initial = it.price?.initial ?? final;
+      out.push({
+        appId: it.id,
+        name: it.name,
+        image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+        uahFinal: final,
+        uahInitial: initial,
+        discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,
+        isFree: false,
+      });
+    }
+  }
+  return out
+    .sort((a, b) => b.discount - a.discount || b.uahFinal - a.uahFinal)
+    .slice(0, 24);
+}
