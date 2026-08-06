@@ -252,11 +252,13 @@ function Dashboard() {
               <p className="text-xs text-muted-foreground">ما فيه لعبة قيد اللعب</p>
               <h2 className="font-display text-2xl font-black md:text-3xl">ابدأ رحلتك الجديدة اليوم</h2>
               <p className="text-xs text-muted-foreground">{quote}</p>
-              <Link to="/upcoming" search={{ tab: "toBeat" }} className="w-fit">
-                <Button className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]">
-                  <Plus className="size-4" /> اختر لعبة من الخطة
-                </Button>
-              </Link>
+              <Button
+                onClick={pickRandomPlan}
+                className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]"
+              >
+                <Plus className="size-4" /> اختر لعبة من الخطة
+              </Button>
+
             </>
           )}
         </div>
