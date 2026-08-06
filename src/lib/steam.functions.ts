@@ -30,3 +30,14 @@ export const steamDetailsFn = createServerFn({ method: "GET" })
       return null;
     }
   });
+
+export const steamShotsFn = createServerFn({ method: "GET" })
+  .inputValidator((d: { appId: number }) => ({ appId: Number(d?.appId) }))
+  .handler(async ({ data }) => {
+    const { fetchAppDetails } = await import("./steam.server");
+    try {
+      return (await fetchAppDetails(data.appId))?.screenshots ?? [];
+    } catch {
+      return [];
+    }
+  });

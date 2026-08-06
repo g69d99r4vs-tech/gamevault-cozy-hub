@@ -13,10 +13,14 @@ export type SteamItem = {
   isFree?: boolean;
   /** true إذا كانت اللعبة لم تصدر بعد */
   comingSoon?: boolean;
+  /** YYYY-MM-DD أو null إذا لم يُعلن */
+  released?: string | null;
 };
 
 export type SteamDetails = SteamItem & {
   description: string;
+  /** لقطات رسمية من المتجر (وإطارات الفيديوهات الدعائية) */
+  screenshots: string[];
   developers: string[];
   genres: string[];
   /** YYYY-MM-DD أو null إذا لم يُعلن */
@@ -79,6 +83,11 @@ type RawSearch = {
   }[];
 };
 
+const parseDate = (raw: string | undefined | null) => {
+  const parsed = raw ? new Date(raw) : null;
+  return parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString().slice(0, 10) : null;
+};
+
 export async function searchSteam(term: string): Promise<SteamItem[]> {
   const q = term.trim();
   if (!q) return [];
@@ -86,7 +95,7 @@ export async function searchSteam(term: string): Promise<SteamItem[]> {
     `https://store.steampowered.com/api/storesearch?term=${encodeURIComponent(q)}&cc=${CC}&l=arabic`,
   )) as RawSearch;
 
-  return (data.items ?? []).map((it) => {
+  const base: SteamItem[] = (data.items ?? []).map((it) => {
     const final = it.price?.final ?? 0;
     const initial = it.price?.initial ?? final;
     return {
@@ -99,6 +108,24 @@ export async function searchSteam(term: string): Promise<SteamItem[]> {
       isFree: false,
     };
   });
+
+  // إثراء النتائج بتاريخ الإصدار من صفحة المتجر (بالتوازي ومع تجاهل الأخطاء)
+  const enriched = await Promise.all(
+    base.slice(0, 16).map(async (item) => {
+      const d = await fetchAppDetails(item.appId).catch(() => null);
+      if (!d) return item;
+      return {
+        ...item,
+        released: d.released,
+        comingSoon: d.comingSoon,
+        isFree: Boolean(d.isFree),
+        uahFinal: d.uahFinal || item.uahFinal,
+        uahInitial: d.uahInitial || item.uahInitial,
+        discount: d.discount || item.discount,
+      };
+    }),
+  );
+  return [...enriched, ...base.slice(16)];
 }
 
 const strip = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -118,13 +145,16 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     developers?: string[];
     genres?: { description: string }[];
     price_overview?: { initial: number; final: number; discount_percent: number };
+    screenshots?: { path_thumbnail?: string; path_full?: string }[];
+    movies?: { thumbnail?: string }[];
     release_date?: { coming_soon?: boolean; date?: string };
   };
 
-  const rawDate = d.release_date?.date ?? "";
-  const parsed = rawDate ? new Date(rawDate) : null;
-  const released =
-    parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString().slice(0, 10) : null;
+  const released = parseDate(d.release_date?.date);
+  const shots = [
+    ...(d.screenshots ?? []).map((s) => s.path_full || s.path_thumbnail || ""),
+    ...(d.movies ?? []).map((m) => m.thumbnail || ""),
+  ].filter(Boolean);
 
   return {
     appId,
@@ -136,6 +166,7 @@ export async function fetchAppDetails(appId: number): Promise<SteamDetails | nul
     discount: d.price_overview?.discount_percent ?? 0,
     isFree: Boolean(d.is_free),
     description: strip(d.short_description ?? ""),
+    screenshots: Array.from(new Set(shots)),
     developers: d.developers ?? [],
     genres: (d.genres ?? []).map((g) => g.description),
     released,
