@@ -6,20 +6,7 @@
 const BASE = "https://www.cheapshark.com/api/1.0";
 const UA = "GameHub/1.0 (personal gaming dashboard)";
 
-export type StoreDeal = {
-  dealID: string;
-  gameID: string;
-  title: string;
-  thumb: string;
-  capsule: string;
-  salePriceUsd: number;
-  normalPriceUsd: number;
-  savings: number;
-  metacriticScore: number | null;
-  steamRatingPercent: number | null;
-  releaseDate: number | null;
-  steamAppID: string | null;
-};
+import type { StoreDeal, StoreDealDetails } from "./deals";
 
 const num = (v: unknown) => {
   const n = Number(v);
@@ -99,26 +86,6 @@ export async function searchDeals(q: string): Promise<StoreDeal[]> {
   );
   return dedupe(list.map(toDeal).filter(usable));
 }
-
-export type StoreDealDetails = {
-  dealID: string;
-  title: string;
-  thumb: string;
-  hero: string;
-  salePriceUsd: number;
-  retailPriceUsd: number;
-  cheapestEverUsd: number | null;
-  metacriticScore: number | null;
-  steamRatingPercent: number | null;
-  steamRatingText: string | null;
-  publisher: string | null;
-  developer: string | null;
-  releaseDate: number | null;
-  genres: string[];
-  description: string;
-  screenshots: string[];
-  steamAppID: string | null;
-};
 
 type SteamApp = {
   short_description?: string;
