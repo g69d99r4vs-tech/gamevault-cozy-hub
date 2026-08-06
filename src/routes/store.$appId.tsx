@@ -1,12 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { ArrowRight, ExternalLink, Heart, Loader2 } from "lucide-react";
+import { ArrowRight, CalendarPlus, ExternalLink, Heart, Loader2 } from "lucide-react";
 import { steamDetailsFn } from "@/lib/steam.functions";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/lib/store-favorites";
 import { buzz } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
+import { onImgError, safeImg } from "@/lib/img";
+import { useStore } from "@/lib/store";
+import { hijri } from "@/lib/dates";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/store/$appId")({
   head: () => ({
@@ -32,6 +36,10 @@ function StoreGamePage() {
   const favorites = useFavorites((s) => s.favorites);
   const toggleFavorite = useFavorites((s) => s.toggleFavorite);
   const isFav = favorites.some((f) => f.appId === appId);
+  const addGame = useStore((s) => s.addGame);
+  const entries = useStore((s) => s.users[s.currentUser].entries);
+  const gameId = 900_000_000 + appId;
+  const inPlan = entries.some((e) => e.id === gameId && e.status === "hype");
 
   const { data, isLoading } = useQuery({
     queryKey: ["steam-details", appId],
@@ -45,7 +53,7 @@ function StoreGamePage() {
     <div dir="rtl" className="relative -mt-2 space-y-6">
       {/* خلفية سينمائية */}
       <div className="pointer-events-none absolute inset-x-0 -top-24 h-[420px] overflow-hidden">
-        <img src={image} alt="" aria-hidden className="size-full scale-110 object-cover opacity-25 blur-2xl" />
+        <img src={safeImg(image)} onError={onImgError} alt="" aria-hidden className="size-full scale-110 object-cover opacity-25 blur-2xl" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/70 to-background" />
       </div>
 
@@ -62,7 +70,7 @@ function StoreGamePage() {
           animate={{ opacity: 1, y: 0 }}
           className="overflow-hidden rounded-[2rem] border-2 border-yellow-500/25 bg-card shadow-[0_0_45px_-22px_rgba(234,179,8,0.9)]"
         >
-          <img src={image} alt={data?.name ?? "غلاف اللعبة"} className="aspect-[460/215] w-full object-cover" />
+          <img src={safeImg(image)} onError={onImgError} alt={data?.name ?? "غلاف اللعبة"} className="aspect-[460/215] w-full object-cover" />
         </motion.div>
 
         {isLoading ? (
@@ -99,6 +107,10 @@ function StoreGamePage() {
               </div>
             )}
 
+            {!!data?.released && (
+              <p className="text-xs text-muted-foreground">تاريخ الإصدار: {hijri(data.released)}</p>
+            )}
+
             {!!data?.developers?.length && (
               <p className="text-xs text-muted-foreground">المطوّر: {data.developers.join("، ")}</p>
             )}
@@ -106,6 +118,32 @@ function StoreGamePage() {
             <p className="text-sm leading-relaxed text-muted-foreground">
               {data?.description || "لا يوجد وصف متاح لهذه اللعبة."}
             </p>
+
+            <Button
+              onClick={() => {
+                buzz(30);
+                addGame(
+                  {
+                    id: gameId,
+                    slug: `steam-${appId}`,
+                    name: data?.name ?? `App ${appId}`,
+                    released: data?.released ?? null,
+                    background_image: image,
+                    rating: 0,
+                    metacritic: null,
+                    genres: (data?.genres ?? []).map((g, i) => ({ id: i, name: g, slug: g })),
+                    developers: (data?.developers ?? []).map((n, i) => ({ id: i, name: n })),
+                  },
+                  "hype",
+                );
+                toast.success("أُضيفت إلى الإصدارات المرتقبة");
+              }}
+              disabled={inPlan}
+              className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary/15 font-display text-base font-black text-primary hover:bg-primary/25"
+            >
+              <CalendarPlus className="size-4" />
+              {inPlan ? "في الإصدارات المرتقبة" : "إضافة للإصدارات المرتقبة"}
+            </Button>
 
             <div className="grid gap-3 pt-2 sm:grid-cols-2">
               <Button
