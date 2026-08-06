@@ -146,3 +146,13 @@ export async function recommendedGames(
   }
   return [...unique.values()].sort(byPrestige).slice(0, 18);
 }
+
+/** بحث سريع عن غلاف لعبة بالاسم — يُستخدم كبديل ذكي عند غياب صورة المتجر */
+export async function artForName(name: string): Promise<string | null> {
+  const clean = name.replace(/[™®©]/g, "").trim();
+  if (clean.length < 2) return null;
+  const list = await searchIgdb(clean, 3).catch(() => []);
+  const hit = list[0];
+  if (!hit) return null;
+  return hit.background_image ?? null;
+}
