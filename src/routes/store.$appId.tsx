@@ -31,7 +31,7 @@ const UAH_TO_SAR = 0.091;
 const toSar = (cents: number) => Math.round((cents / 100) * UAH_TO_SAR);
 const sarLabel = (
   cents: number,
-  opts: { isFree?: boolean; comingSoon?: boolean } = {},
+  opts: { isFree?: boolean | undefined; comingSoon?: boolean | undefined } = {},
 ) => {
   if (cents > 0) return `${toSar(cents)} ريال`;
   if (opts.comingSoon) return "قريباً";
