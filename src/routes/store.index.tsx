@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, ExternalLink, X, Loader2 } from "lucide-react";
-import { steamSpecialsFn, steamSearchFn, steamDetailsFn } from "@/lib/steam.functions";
+import { Search, Heart, Flame, ChevronLeft, ChevronRight } from "lucide-react";
+import { steamSpecialsFn, steamSearchFn } from "@/lib/steam.functions";
 import { SectionTitle } from "@/components/ui-bits";
-import { Button } from "@/components/ui/button";
+import { useFavorites } from "@/lib/store-favorites";
 import { buzz } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/store/")({
 
 /** 1 هريفنيا أوكرانية = 0.091 ريال سعودي */
 const UAH_TO_SAR = 0.091;
-const toSar = (cents: number) => Math.round((cents / 100) * UAH_TO_SAR);
-const sarLabel = (cents: number) => (cents > 0 ? `${toSar(cents)} ريال` : "مجانية");
+export const toSar = (cents: number) => Math.round((cents / 100) * UAH_TO_SAR);
+export const sarLabel = (cents: number) => (cents > 0 ? `${toSar(cents)} ريال` : "مجانية");
 
 type Item = {
   appId: number;
@@ -40,152 +40,152 @@ type Item = {
   discount: number;
 };
 
-function GameCardStore({ item, onOpen, index }: { item: Item; onOpen: () => void; index: number }) {
+function PriceTag({ item }: { item: Item }) {
   return (
-    <motion.button
-      type="button"
+    <div className="flex items-center gap-2">
+      {item.discount > 0 && item.uahInitial > item.uahFinal && (
+        <span className="text-[11px] text-muted-foreground line-through">
+          {toSar(item.uahInitial)} ريال
+        </span>
+      )}
+      <span className="font-display text-base font-black text-primary">
+        {sarLabel(item.uahFinal)}
+      </span>
+    </div>
+  );
+}
+
+function GameCardStore({ item, index }: { item: Item; index: number }) {
+  return (
+    <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3) }}
-      onClick={() => {
-        buzz(20);
-        onOpen();
-      }}
-      className="group overflow-hidden rounded-3xl border border-border bg-card text-right surface-hover"
     >
-      <div className="relative aspect-[460/215] overflow-hidden">
-        <img
-          src={item.image}
-          alt={item.name}
-          loading="lazy"
-          className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {item.discount > 0 && (
-          <span className="absolute right-2 top-2 rounded-xl bg-primary px-2 py-1 text-[11px] font-black text-primary-foreground">
-            -{item.discount}%
-          </span>
-        )}
-      </div>
-      <div className="space-y-1 p-3">
-        <h3 className="line-clamp-2 text-sm font-bold leading-snug">{item.name}</h3>
-        <div className="flex items-center gap-2">
-          {item.discount > 0 && item.uahInitial > item.uahFinal && (
-            <span className="text-[11px] text-muted-foreground line-through">
-              {toSar(item.uahInitial)} ريال
+      <Link
+        to="/store/$appId"
+        params={{ appId: String(item.appId) }}
+        onClick={() => buzz(20)}
+        className="group block overflow-hidden rounded-3xl border border-border bg-card text-right surface-hover"
+      >
+        <div className="relative aspect-[460/215] overflow-hidden">
+          <img
+            src={item.image}
+            alt={item.name}
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+          {item.discount > 0 && (
+            <span className="absolute right-2 top-2 rounded-xl bg-primary px-2 py-1 text-[11px] font-black text-primary-foreground">
+              -{item.discount}%
             </span>
           )}
-          <span className="font-display text-base font-black text-primary">
+        </div>
+        <div className="space-y-1 p-3">
+          <h3 className="line-clamp-2 text-sm font-bold leading-snug">{item.name}</h3>
+          <PriceTag item={item} />
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
+function HeroCarousel({ items }: { items: Item[] }) {
+  const [i, setI] = useState(0);
+  const navigate = useNavigate();
+  const len = items.length;
+
+  useEffect(() => {
+    if (len < 2) return;
+    const t = setInterval(() => setI((v) => (v + 1) % len), 5000);
+    return () => clearInterval(t);
+  }, [len]);
+
+  if (!len) return null;
+  const item = items[i % len]!;
+
+  return (
+    <section className="relative overflow-hidden rounded-[2rem] border-2 border-yellow-500/25 shadow-[0_0_40px_-20px_rgba(234,179,8,0.9)]">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={item.appId}
+          src={item.image}
+          alt={item.name}
+          initial={{ opacity: 0, scale: 1.08 }}
+          animate={{ opacity: 0.65, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.7 }}
+          className="absolute inset-0 size-full object-cover"
+        />
+      </AnimatePresence>
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+      <button
+        type="button"
+        onClick={() => {
+          buzz(20);
+          navigate({ to: "/store/$appId", params: { appId: String(item.appId) } });
+        }}
+        className="relative flex min-h-52 w-full flex-col justify-end gap-2 p-5 text-right"
+      >
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-primary">
+          <Flame className="size-3.5" /> أبرز العروض
+        </span>
+        <h2 className="line-clamp-2 font-display text-2xl font-black md:text-4xl">{item.name}</h2>
+        <div className="flex items-center gap-2">
+          {item.discount > 0 && (
+            <span className="rounded-xl bg-primary px-2 py-1 text-[11px] font-black text-primary-foreground">
+              -{item.discount}%
+            </span>
+          )}
+          <span className="font-display text-xl font-black text-primary">
             {sarLabel(item.uahFinal)}
           </span>
         </div>
-      </div>
-    </motion.button>
-  );
-}
+      </button>
 
-function DetailsModal({ appId, onClose }: { appId: number; onClose: () => void }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["steam-details", appId],
-    queryFn: () => steamDetailsFn({ data: { appId } }),
-  });
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        dir="rtl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[70] grid place-items-center bg-black/80 p-4 backdrop-blur-sm"
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 320, damping: 28 }}
-          onClick={(e) => e.stopPropagation()}
-          className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-primary/25 bg-card shadow-2xl"
+      <div className="absolute bottom-4 left-4 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="التالي"
+          onClick={() => setI((v) => (v + 1) % len)}
+          className="grid size-8 place-items-center rounded-full glass"
         >
-          <div className="relative">
-            <img
-              src={
-                data?.image ??
-                `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`
-              }
-              alt={data?.name ?? "غلاف اللعبة"}
-              className="aspect-[460/215] w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="إغلاق"
-              className="absolute left-3 top-3 grid size-9 place-items-center rounded-full bg-background/80 text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
-          <div className="space-y-4 p-5">
-            {isLoading ? (
-              <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> جاري التحميل…
-              </div>
-            ) : (
-              <>
-                <h2 className="font-display text-2xl font-black">{data?.name ?? "لعبة"}</h2>
-                <div className="flex items-center gap-3">
-                  <span className="rounded-2xl bg-primary/12 px-3 py-1.5 font-display text-lg font-black text-primary">
-                    {sarLabel(data?.uahFinal ?? 0)}
-                  </span>
-                  {!!data?.discount && (
-                    <span className="rounded-xl bg-primary px-2 py-1 text-[11px] font-black text-primary-foreground">
-                      -{data.discount}%
-                    </span>
-                  )}
-                </div>
-                {!!data?.genres?.length && (
-                  <div className="flex flex-wrap gap-2">
-                    {data.genres.slice(0, 4).map((g) => (
-                      <span
-                        key={g}
-                        className="rounded-full bg-secondary px-3 py-1 text-[11px] text-muted-foreground"
-                      >
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {data?.description || "لا يوجد وصف متاح لهذه اللعبة."}
-                </p>
-              </>
-            )}
-
-            <Button
-              onClick={() => {
-                buzz(30);
-                window.open(
-                  `https://store.steampowered.com/app/${appId}`,
-                  "_blank",
-                  "noopener,noreferrer",
-                );
-              }}
-              className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
-            >
-              <ExternalLink className="size-4" /> انقلني للموقع
-            </Button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+          <ChevronLeft className="size-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="السابق"
+          onClick={() => setI((v) => (v - 1 + len) % len)}
+          className="grid size-8 place-items-center rounded-full glass"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
+    </section>
   );
 }
+
+function Row({ items }: { items: Item[] }) {
+  return (
+    <div dir="rtl" className="no-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1">
+      {items.map((item, i) => (
+        <div key={item.appId} className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[28%]">
+          <GameCardStore item={item} index={i} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const tabs = [
+  { v: "sales", l: "العروض الحالية" },
+  { v: "favs", l: "مفضلتي" },
+] as const;
 
 function StorePage() {
   const [term, setTerm] = useState("");
-  const [openId, setOpenId] = useState<number | null>(null);
+  const [tab, setTab] = useState<(typeof tabs)[number]["v"]>("sales");
+  const favorites = useFavorites((s) => s.favorites);
 
   const specials = useQuery({
     queryKey: ["steam-specials"],
@@ -201,7 +201,10 @@ function StorePage() {
   });
 
   const results = useMemo(() => (search.data ?? []) as Item[], [search.data]);
-  const sales = useMemo(() => ((specials.data ?? []) as Item[]).slice(0, 30), [specials.data]);
+  const all = useMemo(() => (specials.data ?? []) as Item[], [specials.data]);
+  const hero = all.filter((x) => x.discount > 0).slice(0, 5);
+  const offers = all.filter((x) => x.discount > 0).slice(0, 18);
+  const rest = all.slice(offers.length, offers.length + 24);
 
   return (
     <div dir="rtl" className="space-y-6">
@@ -215,6 +218,33 @@ function StorePage() {
         />
       </div>
 
+      <div className="flex gap-1 rounded-2xl bg-secondary/50 p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.v}
+            type="button"
+            onClick={() => {
+              buzz(15);
+              setTab(t.v);
+            }}
+            className={cn(
+              "flex-1 rounded-xl px-3 py-2 font-display text-sm font-black transition",
+              tab === t.v
+                ? "bg-primary text-primary-foreground shadow-[0_0_25px_-8px_rgba(234,179,8,0.9)]"
+                : "text-muted-foreground",
+            )}
+          >
+            {t.v === "favs" ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Heart className="size-3.5" /> {t.l}
+              </span>
+            ) : (
+              t.l
+            )}
+          </button>
+        ))}
+      </div>
+
       {q.length >= 2 ? (
         <section className="space-y-3">
           <SectionTitle title="نتائج البحث" subtitle={`عن «${q}»`} />
@@ -223,12 +253,7 @@ function StorePage() {
           ) : results.length ? (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {results.map((item, i) => (
-                <GameCardStore
-                  key={item.appId}
-                  item={item}
-                  index={i}
-                  onOpen={() => setOpenId(item.appId)}
-                />
+                <GameCardStore key={item.appId} item={item} index={i} />
               ))}
             </div>
           ) : (
@@ -237,35 +262,54 @@ function StorePage() {
             </p>
           )}
         </section>
-      ) : null}
+      ) : tab === "favs" ? (
+        <section className="space-y-3">
+          <SectionTitle title="مفضلتي" subtitle="الألعاب اللي حفظتها من المتجر" />
+          {favorites.length ? (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+              {favorites.map((item, i) => (
+                <GameCardStore key={item.appId} item={item} index={i} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-3xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              ما فيه ألعاب بالمفضلة — افتح أي لعبة وأضفها ❤️
+            </p>
+          )}
+        </section>
+      ) : (
+        <>
+          <HeroCarousel items={hero} />
 
-      <section className={cn("space-y-3", q.length >= 2 && "opacity-90")}>
-        <SectionTitle title="العروض الحالية" subtitle="أسعار ستيم محوّلة للريال السعودي" />
-        {specials.isLoading ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-48 animate-pulse rounded-3xl bg-secondary/60" />
-            ))}
-          </div>
-        ) : sales.length ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {sales.map((item, i) => (
-              <GameCardStore
-                key={item.appId}
-                item={item}
-                index={i}
-                onOpen={() => setOpenId(item.appId)}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="rounded-3xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            تعذّر جلب العروض حاليًا، جرّب لاحقًا.
-          </p>
-        )}
-      </section>
+          <section className="space-y-3">
+            <SectionTitle title="عروض مميزة" subtitle="أسعار ستيم محوّلة للريال السعودي" />
+            {specials.isLoading ? (
+              <div className="flex gap-3 overflow-hidden">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-48 w-[70%] shrink-0 animate-pulse rounded-3xl bg-secondary/60 sm:w-[42%]" />
+                ))}
+              </div>
+            ) : offers.length ? (
+              <Row items={offers} />
+            ) : (
+              <p className="rounded-3xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                تعذّر جلب العروض حاليًا، جرّب لاحقًا.
+              </p>
+            )}
+          </section>
 
-      {openId !== null && <DetailsModal appId={openId} onClose={() => setOpenId(null)} />}
+          {!!rest.length && (
+            <section className="space-y-3">
+              <SectionTitle title="الأكثر مبيعًا" subtitle="اختيارات ستيم الرائجة" />
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+                {rest.map((item, i) => (
+                  <GameCardStore key={item.appId} item={item} index={i} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 }
