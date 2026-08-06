@@ -182,9 +182,10 @@ export type StoreShelves = {
   comingSoon: SteamItem[];
 };
 
-const mapBucket = (items: RawSpecial[] | undefined): SteamItem[] =>
-  (items ?? [])
-    .filter((it) => Boolean(it?.id))
+const mapBucket = (items: RawSpecial[] | undefined): SteamItem[] => {
+  const seen = new Set<number>();
+  return (items ?? [])
+    .filter((it) => Boolean(it?.id) && !seen.has(it.id) && Boolean(seen.add(it.id)) === false)
     .map((it) => ({
       appId: it.id,
       name: it.name,
@@ -197,6 +198,7 @@ const mapBucket = (items: RawSpecial[] | undefined): SteamItem[] =>
       discount: it.discount_percent ?? 0,
       isFree: false,
     }));
+};
 
 export async function fetchShelves(): Promise<StoreShelves> {
   const data = (await safeJson(
