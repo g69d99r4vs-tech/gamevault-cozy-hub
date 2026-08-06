@@ -1,14 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useCurrentData, useStore } from "@/lib/store";
+import { useCurrentData, useStore, type GameEntry } from "@/lib/store";
 import { SectionTitle, EmptyState } from "@/components/ui-bits";
 import { Countdown } from "@/components/Countdown";
 import { gregorian, hijri, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { buzz } from "@/lib/haptics";
 import { toast } from "sonner";
-import { motion } from "motion/react";
-import { Trash2, ChevronDown, ChevronUp, GripVertical, Star } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Trash2, ChevronDown, ChevronUp, GripVertical, Star, Dices } from "lucide-react";
 
 export const Route = createFileRoute("/upcoming")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -42,6 +42,7 @@ function PlanPage() {
   const reorderQueue = useStore((s) => s.reorderQueue);
   const [tab, setTab] = useState<(typeof topTabs)[number]["v"]>(initialTab);
   const [dragId, setDragId] = useState<number | null>(null);
+  const [picked, setPicked] = useState<GameEntry | null>(null);
 
 
   const releases = [...data.entries]
@@ -53,6 +54,16 @@ function PlanPage() {
     .sort(
       (a, b) => (a.queuePosition || 999) - (b.queuePosition || 999) || a.name.localeCompare(b.name),
     );
+
+  const pickRandom = () => {
+    const pool = data.entries.filter((e) => e.status === "backlog");
+    if (!pool.length) {
+      toast("قائمة «ناوي أختمها» فاضية — أضف ألعاب أولاً");
+      return;
+    }
+    buzz(40);
+    setPicked(pool[Math.floor(Math.random() * pool.length)]!);
+  };
 
   const move = (from: number, to: number) => {
     if (to < 0 || to >= toBeat.length || from === to || from < 0) return;
@@ -66,6 +77,22 @@ function PlanPage() {
   return (
     <div className="space-y-5">
       <SectionTitle title="الخطة" subtitle="ما ينتظرك قريبًا، وما نويت تختمه بعد لعبتك الحالية" />
+
+      <button
+        type="button"
+        onClick={pickRandom}
+        className="group flex w-full items-center gap-4 overflow-hidden rounded-[1.75rem] border-2 border-yellow-500/35 bg-card px-5 py-4 text-right shadow-[0_0_35px_-18px_rgba(234,179,8,0.9)] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+      >
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/12">
+          <Dices className="size-6 gold-glow transition-transform duration-500 group-hover:rotate-180" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-xl font-black">وش نلعب اليوم؟</span>
+          <span className="block text-[11px] text-muted-foreground">
+            اختيار عشوائي من قائمة «ناوي أختمها»
+          </span>
+        </span>
+      </button>
 
       <div className="flex gap-2 rounded-2xl bg-secondary/50 p-1">
         {topTabs.map((t) => (
@@ -232,6 +259,46 @@ function PlanPage() {
       ) : (
         <EmptyState text="ما فيه ألعاب في «ناوي أختمها» — أضف لعبة واختر حالة «الانتظار»." />
       )}
+    <AnimatePresence>
+        {picked && (
+          <motion.div
+            dir="rtl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPicked(null)}
+            className="fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
+            >
+              <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
+                وش نلعب اليوم؟
+              </p>
+              {picked.image && (
+                <img src={picked.image} alt={picked.name} className="aspect-video w-full object-cover" />
+              )}
+              <div className="space-y-4 p-5">
+                <h3 className="font-display text-2xl font-black">{picked.name}</h3>
+                <Button
+                  onClick={() => {
+                    buzz(30);
+                    setPicked(null);
+                  }}
+                  className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
+                >
+                  يلا نلعب!
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
