@@ -3,13 +3,14 @@ import { useState } from "react";
 import { useCurrentData, useStore, type GameEntry } from "@/lib/store";
 import { SectionTitle, EmptyState } from "@/components/ui-bits";
 import { Countdown } from "@/components/Countdown";
-import { hijri, num } from "@/lib/dates";
+import { gdate, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { buzz } from "@/lib/haptics";
 import { SmartImage } from "@/components/SmartImage";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
-import { Trash2, ChevronDown, ChevronUp, GripVertical, Star, Dices } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, GripVertical, Star, Dices, Pencil } from "lucide-react";
+import { DateEditDialog } from "@/components/DateEditDialog";
 
 export const Route = createFileRoute("/upcoming")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -44,6 +45,7 @@ function PlanPage() {
   const [tab, setTab] = useState<(typeof topTabs)[number]["v"]>(initialTab);
   const [dragId, setDragId] = useState<number | null>(null);
   const [picked, setPicked] = useState<GameEntry | null>(null);
+  const [editing, setEditing] = useState<GameEntry | null>(null);
 
 
   const releases = [...data.entries]
@@ -142,24 +144,37 @@ function PlanPage() {
                       </h3>
                     </Link>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      {hijri(g.released, "غير معلن")}
+                      {gdate(g.released, "غير معلن")}
                     </p>
                   </div>
 
                   <Countdown target={g.released} />
 
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-fit rounded-xl"
-                    onClick={() => {
-                      buzz(30);
-                      removeGame(g.id);
-                      toast("أُزيلت من المرتقبة");
-                    }}
-                  >
-                    <Trash2 className="size-3.5" /> إزالة
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="w-fit rounded-xl"
+                      onClick={() => {
+                        buzz(20);
+                        setEditing(g);
+                      }}
+                    >
+                      <Pencil className="size-3.5" /> تعديل التاريخ
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="w-fit rounded-xl"
+                      onClick={() => {
+                        buzz(30);
+                        removeGame(g.id);
+                        toast("أُزيلت من المرتقبة");
+                      }}
+                    >
+                      <Trash2 className="size-3.5" /> إزالة
+                    </Button>
+                  </div>
                 </div>
               </motion.article>
             ))}
@@ -296,6 +311,7 @@ function PlanPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <DateEditDialog game={editing} onClose={() => setEditing(null)} />
     </div>
   );
 }

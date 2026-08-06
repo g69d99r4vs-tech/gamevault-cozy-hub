@@ -1,10 +1,4 @@
-/** كل التواريخ في التطبيق تُعرض بالهجري الرقمي: 1448/02/15 */
-
-const hijriFmt = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-nu-latn", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
+/** كل التواريخ في التطبيق تُعرض بالميلادي الرقمي: 15/03/2026 */
 
 const toDate = (date: string | Date | null | undefined) => {
   if (!date) return null;
@@ -12,27 +6,19 @@ const toDate = (date: string | Date | null | undefined) => {
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
-/** 15/03/1448 — يوم/شهر/سنة بأرقام فقط */
-export const hijri = (date: string | Date | null | undefined, fallback = "—") => {
+/** 15/03/2026 — يوم/شهر/سنة بأرقام فقط (ميلادي) */
+export const gdate = (date: string | Date | null | undefined, fallback = "—") => {
   const d = toDate(date);
   if (!d) return fallback;
-  try {
-    const parts = hijriFmt.formatToParts(d);
-    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-    const y = Number(get("year").replace(/[^\d]/g, ""));
-    const m = Number(get("month").replace(/[^\d]/g, ""));
-    const day = Number(get("day").replace(/[^\d]/g, ""));
-    // لا نسمح أبدًا بأصفار أو قيم غير صالحة
-    if (!y || !m || !day || m > 12 || day > 30) return fallback;
-    return `${String(day).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
-  } catch {
-    return fallback;
-  }
+  const day = d.getDate();
+  const m = d.getMonth() + 1;
+  const y = d.getFullYear();
+  if (!day || !m || !y) return fallback;
+  return `${String(day).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
 };
 
-
-/** يبقى الاسم للتوافق — لكنه يعرض هجريًا رقميًا مثل بقية التطبيق */
-export const gregorian = (date: string | Date | null | undefined) => hijri(date, "غير معلن");
+/** أسماء قديمة للتوافق — كلها ميلادية رقمية الآن */
+export const gregorian = (date: string | Date | null | undefined) => gdate(date, "غير معلن");
 
 export const num = (n: number, digits = 0) =>
   new Intl.NumberFormat("ar-EG", { maximumFractionDigits: digits }).format(n);
@@ -61,9 +47,9 @@ export const countdown = (target: string | null, now: number) => {
   };
 };
 
-/** «15/03» — يوم/شهر بأرقام هجرية فقط */
+/** «15/03» — يوم/شهر بأرقام ميلادية فقط */
 export const dayMonth = (date: string | Date | null | undefined, fallback = "—") => {
-  const h = hijri(date, fallback);
+  const h = gdate(date, fallback);
   if (h === fallback) return fallback;
   return h.split("/").slice(0, 2).join("/");
 };

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getGame, getScreenshots, getSimilar } from "@/lib/rawg";
-import { gregorian, hijri } from "@/lib/dates";
+import { gregorian } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { useStore, type GameEntry, type Status } from "@/lib/store";
 import { GameEditDialog } from "@/components/GameEditDialog";
@@ -126,7 +126,7 @@ function GamePage() {
             )}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            {gregorian(game.released)} · {hijri(game.released)}
+            {gregorian(game.released)}
           </p>
           {upcoming && (
             <div className="mt-4">

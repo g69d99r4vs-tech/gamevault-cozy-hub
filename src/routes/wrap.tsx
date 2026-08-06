@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useCurrentData } from "@/lib/store";
 import { computeWrap, yearGrid } from "@/lib/stats";
-import { hijri, num } from "@/lib/dates";
+import { gdate, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui-bits";
 
@@ -98,7 +98,7 @@ function WrapPage() {
                 {week.map((day, di) => (
                   <span
                     key={di}
-                    title={day ? `${hijri(day.date)} · ${num(w.heat.get(day.date) ?? 0, 1)} ساعة` : ""}
+                    title={day ? `${gdate(day.date)} · ${num(w.heat.get(day.date) ?? 0, 1)} ساعة` : ""}
                     className={`size-[11px] rounded-[3px] ${
                       day ? heatColor(w.heat.get(day.date) ?? 0) : "bg-transparent"
                     }`}

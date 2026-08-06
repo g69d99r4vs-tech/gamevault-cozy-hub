@@ -7,7 +7,7 @@ import { SectionTitle, StatCard, EmptyState } from "@/components/ui-bits";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { hijri, num } from "@/lib/dates";
+import { gdate, num } from "@/lib/dates";
 import { UserSwitcher } from "@/components/UserSwitcher";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -132,7 +132,7 @@ function MePage() {
                 {week.map((day, di) => (
                   <span
                     key={di}
-                    title={day ? `${hijri(day.date)} · ${num(w.heat.get(day.date) ?? 0, 1)} ساعة` : ""}
+                    title={day ? `${gdate(day.date)} · ${num(w.heat.get(day.date) ?? 0, 1)} ساعة` : ""}
                     className={`size-[11px] rounded-[3px] ${
                       day ? heatColor(w.heat.get(day.date) ?? 0) : "bg-transparent"
                     }`}
