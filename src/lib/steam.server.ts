@@ -84,8 +84,10 @@ type RawSearchItem = {
 
 type RawSearch = { items?: RawSearchItem[] };
 
+const ASSETS = "https://shared.akamai.steamstatic.com/store_item_assets/steam";
+
 /**
- * ستيم يخزّن صور الحزم (bundle/sub) في مسارات مختلفة عن الألعاب (apps).
+ * ستيم يخزّن صور الحزم (bundle/sub/package) تحت مسار subs وليس apps.
  * نرقّي الصورة المصغّرة إلى غلاف كامل، وإلا نبني رابط CDN حسب النوع.
  */
 export const storeImage = (it: { id: number; type?: string; tiny_image?: string }) => {
@@ -97,12 +99,11 @@ export const storeImage = (it: { id: number; type?: string; tiny_image?: string 
       .replace("capsule_184x69", "header");
     if (full) return full.startsWith("//") ? `https:${full}` : full;
   }
-  const cdn = "https://cdn.akamai.steamstatic.com/steam";
   const kind = (it.type ?? "app").toLowerCase();
-  if (kind === "bundle") return `${cdn}/bundles/${it.id}/header_586x192.jpg`;
-  if (kind === "sub" || kind === "package") return `${cdn}/subs/${it.id}/header.jpg`;
-  return `${cdn}/apps/${it.id}/header.jpg`;
+  if (kind === "app") return `${ASSETS}/apps/${it.id}/header.jpg`;
+  return `${ASSETS}/subs/${it.id}/header.jpg`;
 };
+
 
 const parseDate = (raw: string | undefined | null) => {
   const parsed = raw ? new Date(raw) : null;
