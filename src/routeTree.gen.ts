@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HallRouteImport } from './routes/hall'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LibraryRouteImport } from './routes/library'
-import { Route as NewsRouteImport } from './routes/news'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -43,11 +42,6 @@ const HomeRoute = HomeRouteImport.update({
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NewsRoute = NewsRouteImport.update({
-  id: '/news',
-  path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -106,7 +100,6 @@ export interface FileRoutesByFullPath {
   '/hall': typeof HallRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
-  '/news': typeof NewsRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -123,7 +116,6 @@ export interface FileRoutesByTo {
   '/hall': typeof HallRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
-  '/news': typeof NewsRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -141,7 +133,6 @@ export interface FileRoutesById {
   '/hall': typeof HallRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
-  '/news': typeof NewsRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
@@ -160,7 +151,6 @@ export interface FileRouteTypes {
     | '/hall'
     | '/home'
     | '/library'
-    | '/news'
     | '/profile'
     | '/search'
     | '/settings'
@@ -177,7 +167,6 @@ export interface FileRouteTypes {
     | '/hall'
     | '/home'
     | '/library'
-    | '/news'
     | '/profile'
     | '/search'
     | '/settings'
@@ -194,7 +183,6 @@ export interface FileRouteTypes {
     | '/hall'
     | '/home'
     | '/library'
-    | '/news'
     | '/profile'
     | '/search'
     | '/settings'
@@ -212,7 +200,6 @@ export interface RootRouteChildren {
   HallRoute: typeof HallRoute
   HomeRoute: typeof HomeRoute
   LibraryRoute: typeof LibraryRoute
-  NewsRoute: typeof NewsRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
@@ -253,13 +240,6 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof LibraryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/news': {
-      id: '/news'
-      path: '/news'
-      fullPath: '/news'
-      preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -340,7 +320,6 @@ const rootRouteChildren: RootRouteChildren = {
   HallRoute: HallRoute,
   HomeRoute: HomeRoute,
   LibraryRoute: LibraryRoute,
-  NewsRoute: NewsRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
