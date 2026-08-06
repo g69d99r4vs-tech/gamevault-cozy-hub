@@ -237,36 +237,38 @@ function GamePage() {
       )}
 
 
-      {!!shots?.length && (
-        <section>
-          <h2 className="mb-3 font-display text-lg font-bold">الصور</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {shots.map((s, i) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setShotIndex(i)}
-                className="overflow-hidden rounded-2xl surface-hover"
-                aria-label="عرض الصورة بملء الشاشة"
-              >
-                <img
-                  src={s.image}
-                  alt={game.name}
-                  loading="lazy"
-                  className="aspect-video w-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-          <Lightbox
-            images={shots.map((s) => s.image)}
-            index={shotIndex}
-            alt={game.name}
-            onIndexChange={setShotIndex}
-            onClose={() => setShotIndex(null)}
-          />
-        </section>
-      )}
+      <section>
+        <h2 className="mb-3 font-display text-lg font-bold">الصور</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          {gallery.map((src, i) => (
+            <button
+              key={`${src}-${i}`}
+              type="button"
+              onClick={() => setShotIndex(i)}
+              className="overflow-hidden rounded-2xl surface-hover"
+              aria-label="عرض الصورة بملء الشاشة"
+            >
+              <img
+                src={src}
+                alt={game.name}
+                loading="lazy"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = placeholder;
+                }}
+                className="aspect-video w-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+        <Lightbox
+          images={gallery}
+          index={shotIndex}
+          alt={game.name}
+          onIndexChange={setShotIndex}
+          onClose={() => setShotIndex(null)}
+        />
+      </section>
+
 
 
       {!!similar?.length && (
