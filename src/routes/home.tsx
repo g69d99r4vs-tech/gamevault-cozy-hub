@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Crown,
   Sparkles,
@@ -157,6 +157,17 @@ function Dashboard() {
     const seed = new Date().getDate() + currentUser.length;
     return pool[seed % pool.length]!;
   }, [data.entries, currentUser]);
+
+  const [picked, setPicked] = useState<GameEntry | null>(null);
+  const pickRandomPlan = () => {
+    const pool = data.entries.filter((e) => e.status === "backlog");
+    if (!pool.length) {
+      toast("قائمة «ناوي أختمها» فاضية — أضف ألعاب من الخطة أولاً");
+      return;
+    }
+    buzz(40);
+    setPicked(pool[Math.floor(Math.random() * pool.length)]!);
+  };
 
   const [quoteIdx, setQuoteIdx] = useState(0);
   useEffect(() => setQuoteIdx(new Date().getDate() % QUOTES.length), []);
@@ -480,6 +491,51 @@ function Dashboard() {
           شاهد إحصائياتك وقارن نفسك مع {other.profile.name}
         </p>
       </Link>
+
+      <AnimatePresence>
+        {picked && (
+          <motion.div
+            dir="rtl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPicked(null)}
+            className="fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
+            >
+              <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
+                وش نلعب اليوم؟
+              </p>
+              {picked.image && (
+                <img
+                  src={picked.image}
+                  alt={picked.name}
+                  className="aspect-video w-full object-cover"
+                />
+              )}
+              <div className="space-y-4 p-5">
+                <h3 className="font-display text-2xl font-black">{picked.name}</h3>
+                <Button
+                  onClick={() => {
+                    buzz(30);
+                    setPicked(null);
+                  }}
+                  className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
+                >
+                  يلا نلعب!
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
