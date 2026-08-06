@@ -185,7 +185,11 @@ export type StoreShelves = {
 const mapBucket = (items: RawSpecial[] | undefined): SteamItem[] => {
   const seen = new Set<number>();
   return (items ?? [])
-    .filter((it) => Boolean(it?.id) && !seen.has(it.id) && Boolean(seen.add(it.id)) === false)
+    .filter((it) => {
+      if (!it?.id || seen.has(it.id)) return false;
+      seen.add(it.id);
+      return true;
+    })
     .map((it) => ({
       appId: it.id,
       name: it.name,
