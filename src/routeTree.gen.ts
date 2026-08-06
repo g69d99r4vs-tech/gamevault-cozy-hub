@@ -17,12 +17,12 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StatsRouteImport } from './routes/stats'
-import { Route as StoreRouteImport } from './routes/store'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as UpcomingRouteImport } from './routes/upcoming'
 import { Route as WrapRouteImport } from './routes/wrap'
 import { Route as FranchiseNameRouteImport } from './routes/franchise.$name'
 import { Route as GameIdRouteImport } from './routes/game.$id'
+import { Route as StoreIndexRouteImport } from './routes/store.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,11 +64,6 @@ const StatsRoute = StatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoreRoute = StoreRouteImport.update({
-  id: '/store',
-  path: '/store',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -94,6 +89,11 @@ const GameIdRoute = GameIdRouteImport.update({
   path: '/game/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreIndexRoute = StoreIndexRouteImport.update({
+  id: '/store/',
+  path: '/store/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,12 +104,12 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
-  '/store': typeof StoreRoute
   '/timeline': typeof TimelineRoute
   '/upcoming': typeof UpcomingRoute
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
+  '/store/': typeof StoreIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -120,12 +120,12 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
-  '/store': typeof StoreRoute
   '/timeline': typeof TimelineRoute
   '/upcoming': typeof UpcomingRoute
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
+  '/store': typeof StoreIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -137,12 +137,12 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/stats': typeof StatsRoute
-  '/store': typeof StoreRoute
   '/timeline': typeof TimelineRoute
   '/upcoming': typeof UpcomingRoute
   '/wrap': typeof WrapRoute
   '/franchise/$name': typeof FranchiseNameRoute
   '/game/$id': typeof GameIdRoute
+  '/store/': typeof StoreIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -155,12 +155,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/stats'
-    | '/store'
     | '/timeline'
     | '/upcoming'
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
+    | '/store/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -171,12 +171,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/stats'
-    | '/store'
     | '/timeline'
     | '/upcoming'
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
+    | '/store'
   id:
     | '__root__'
     | '/'
@@ -187,12 +187,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/stats'
-    | '/store'
     | '/timeline'
     | '/upcoming'
     | '/wrap'
     | '/franchise/$name'
     | '/game/$id'
+    | '/store/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -204,12 +204,12 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   StatsRoute: typeof StatsRoute
-  StoreRoute: typeof StoreRoute
   TimelineRoute: typeof TimelineRoute
   UpcomingRoute: typeof UpcomingRoute
   WrapRoute: typeof WrapRoute
   FranchiseNameRoute: typeof FranchiseNameRoute
   GameIdRoute: typeof GameIdRoute
+  StoreIndexRoute: typeof StoreIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -270,13 +270,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/store': {
-      id: '/store'
-      path: '/store'
-      fullPath: '/store'
-      preLoaderRoute: typeof StoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/timeline': {
       id: '/timeline'
       path: '/timeline'
@@ -312,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/': {
+      id: '/store/'
+      path: '/store'
+      fullPath: '/store/'
+      preLoaderRoute: typeof StoreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -324,12 +324,12 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   StatsRoute: StatsRoute,
-  StoreRoute: StoreRoute,
   TimelineRoute: TimelineRoute,
   UpcomingRoute: UpcomingRoute,
   WrapRoute: WrapRoute,
   FranchiseNameRoute: FranchiseNameRoute,
   GameIdRoute: GameIdRoute,
+  StoreIndexRoute: StoreIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { buzz } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/store")({
+export const Route = createFileRoute("/store/")({
   head: () => ({
     meta: [
       { title: "المتجر — GameHub" },
