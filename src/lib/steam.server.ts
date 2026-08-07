@@ -93,6 +93,12 @@ const ASSETS = "https://shared.akamai.steamstatic.com/store_item_assets/steam";
  * نرقّي الصورة المصغّرة إلى غلاف كامل، وإلا نبني رابط CDN حسب النوع.
  */
 export const storeImage = (it: { id: number; type?: string; tiny_image?: string }) => {
+  const kind = (it.type ?? "app").toLowerCase();
+
+  // نتائج البحث قد تعيد tiny_image بمسار apps حتى عندما يكون العنصر حزمة.
+  // لا نستخدمه للحزم مطلقًا، بل نفرض مسار Steam الرسمي الخاص بـ subs.
+  if (kind !== "app") return `${ASSETS}/subs/${it.id}/header.jpg`;
+
   const tiny = it.tiny_image;
   if (tiny) {
     const full = tiny
@@ -101,9 +107,7 @@ export const storeImage = (it: { id: number; type?: string; tiny_image?: string 
       .replace("capsule_184x69", "header");
     if (full) return full.startsWith("//") ? `https:${full}` : full;
   }
-  const kind = (it.type ?? "app").toLowerCase();
-  if (kind === "app") return `${ASSETS}/apps/${it.id}/header.jpg`;
-  return `${ASSETS}/subs/${it.id}/header.jpg`;
+  return `${ASSETS}/apps/${it.id}/header.jpg`;
 };
 
 
@@ -331,7 +335,7 @@ export async function fetchBundles(): Promise<SteamItem[]> {
         appId: it.id,
         name: it.name,
         image: storeImage(it),
-      kind: (it.type ?? "app").toLowerCase() === "app" ? ("app" as const) : ("sub" as const),
+        kind: (it.type ?? "app").toLowerCase() === "app" ? ("app" as const) : ("sub" as const),
         uahFinal: final,
         uahInitial: initial,
         discount: initial > final && initial > 0 ? Math.round((1 - final / initial) * 100) : 0,

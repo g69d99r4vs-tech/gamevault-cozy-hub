@@ -43,6 +43,7 @@ type Item = {
   appId: number;
   name: string;
   image: string;
+  kind?: "app" | "sub";
   uahFinal: number;
   uahInitial: number;
   discount: number;
@@ -83,6 +84,11 @@ function GameCardStore({
   index: number;
   bundle?: boolean;
 }) {
+  const imageSrc =
+    item.kind === "sub"
+      ? `https://shared.akamai.steamstatic.com/store_item_assets/steam/subs/${item.appId}/header.jpg`
+      : item.image;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -102,7 +108,7 @@ function GameCardStore({
       >
         <div className="relative aspect-[460/215] overflow-hidden">
           <SmartImage
-            src={item.image}
+            src={imageSrc}
             name={item.name}
             alt={item.name}
             className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
