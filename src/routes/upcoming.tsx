@@ -64,8 +64,30 @@ function PlanPage() {
       toast("قائمة «ناوي أختمها» فاضية — أضف ألعاب أولاً");
       return;
     }
-    buzz(40);
-    setPicked(pool[Math.floor(Math.random() * pool.length)]!);
+    if (spinning) return;
+    buzzDouble();
+    setPicked(null);
+    setSpinning(true);
+
+    const winner = pool[Math.floor(Math.random() * pool.length)]!;
+    const total = 2800;
+    let elapsed = 0;
+
+    const step = () => {
+      setReel(pool[Math.floor(Math.random() * pool.length)]!);
+      const progress = elapsed / total;
+      const delay = 55 + progress * progress * 320;
+      elapsed += delay;
+      if (elapsed < total) {
+        spinRef.current = setTimeout(step, delay);
+      } else {
+        setSpinning(false);
+        setReel(null);
+        setPicked(winner);
+        buzzDouble();
+      }
+    };
+    step();
   };
 
   const move = (from: number, to: number) => {
