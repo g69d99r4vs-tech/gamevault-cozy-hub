@@ -16,8 +16,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CheckCircle2, Timer, CalendarDays, Sun, Percent, Flame } from "lucide-react";
+import { CheckCircle2, Timer, CalendarDays, Sun, Percent, Flame, Crown } from "lucide-react";
 import { difficultyLabel } from "@/lib/store";
+import { TugOfWar } from "@/components/TugOfWar";
 
 export const Route = createFileRoute("/stats")({
   head: () => ({

@@ -125,44 +125,24 @@ function MePage() {
       {/* خريطة النشاط */}
       <section>
         <SectionTitle title="خريطة النشاط" subtitle={`أيام لعبك خلال ${year}`} />
-        <div className="overflow-x-auto rounded-3xl border border-border bg-card p-4">
-          <div className="flex gap-[3px]" dir="ltr">
-            {weeks.map((week, wi) => (
-              <div key={wi} className="flex flex-col gap-[3px]">
-                {week.map((day, di) => (
-                  <span
-                    key={di}
-                    title={day ? `${gdate(day.date)} · ${num(w.heat.get(day.date) ?? 0, 1)} ساعة` : ""}
-                    className={`size-[11px] rounded-[3px] ${
-                      day ? heatColor(w.heat.get(day.date) ?? 0) : "bg-transparent"
-                    }`}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground" dir="ltr">
-            <span>أقل</span>
-            {["bg-secondary/60", "bg-primary/30", "bg-primary/55", "bg-primary/80", "bg-primary"].map((c) => (
-              <span key={c} className={`size-[11px] rounded-[3px] ${c}`} />
-            ))}
-            <span>أكثر</span>
-          </div>
-        </div>
+        <HeatMap weeks={weeks} heat={w.heat} />
       </section>
 
       {/* المقارنة */}
-      <section>
-        <SectionTitle title="المقارنة" subtitle="فيصل ضد مشعل" />
+      <section className="space-y-3">
+        <SectionTitle title="المقارنة" subtitle="فيصل ضد مشعل — شد الحبل" />
         <div className="grid gap-3 md:grid-cols-2">
           {[
-            { p: users.faisal.profile, st: a },
-            { p: users.mishal.profile, st: b },
+            { p: users.faisal.profile, st: a, wins: a.hours > b.hours },
+            { p: users.mishal.profile, st: b, wins: b.hours > a.hours },
           ].map((u) => (
             <div key={u.p.name} className="rounded-3xl border border-border bg-card p-5">
               <div className="mb-4 flex items-center gap-3">
                 <UserAvatar value={u.p.avatar} size={44} />
-                <p className="font-display text-lg font-extrabold">{u.p.name}</p>
+                <p className="flex items-center gap-1 font-display text-lg font-extrabold">
+                  <bdi>{u.p.name}</bdi>
+                  {u.wins && <Crown className="size-4 text-primary" />}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {[
@@ -180,38 +160,30 @@ function MePage() {
             </div>
           ))}
         </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <TugOfWar
+            label="ساعات اللعب"
+            leftName={users.faisal.profile.name}
+            rightName={users.mishal.profile.name}
+            left={Number(a.hours.toFixed(1))}
+            right={Number(b.hours.toFixed(1))}
+            format={(v) => `${num(v, 1)} ساعة`}
+          />
+          <TugOfWar
+            label="الألعاب المكتملة"
+            leftName={users.faisal.profile.name}
+            rightName={users.mishal.profile.name}
+            left={a.completed}
+            right={b.completed}
+            format={(v) => num(v)}
+          />
+        </div>
       </section>
 
       {/* أفضل ألعابي */}
       <section>
         <SectionTitle title="أفضل 10 ألعاب" subtitle="مرتّبة حسب تقييمك الشخصي" />
-        {hallOfFame.length ? (
-          <div className="space-y-2">
-            {hallOfFame.map((g, i) => (
-              <motion.div
-                key={g.id}
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="flex items-center gap-4 rounded-2xl border border-border bg-card p-3"
-              >
-                <span className="font-display text-xl font-black text-primary">#{i + 1}</span>
-                {g.image && (
-                  <img src={g.image} alt={g.name} loading="lazy" className="size-14 rounded-xl object-cover" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold">{g.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {g.review || "بدون مراجعة"} · {num(g.hours)} ساعة
-                  </p>
-                </div>
-                <span className="font-display font-bold text-primary">{g.personalRating}/10</span>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState text="قيّم ألعابك لتظهر هنا." />
-        )}
+        <TopTenCarousel games={hallOfFame} />
       </section>
     </div>
   );
