@@ -272,42 +272,87 @@ function PlanPage() {
         <EmptyState text="ما فيه ألعاب في «ناوي أختمها» — أضف لعبة واختر حالة «الانتظار»." />
       )}
     <AnimatePresence>
-        {picked && (
+        {(spinning || picked) && (
           <motion.div
             dir="rtl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setPicked(null)}
+            onClick={() => !spinning && setPicked(null)}
             className="fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4 backdrop-blur-sm"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 300, damping: 24 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
-            >
-              <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
-                وش نلعب اليوم؟
-              </p>
-              {picked.image && (
-                <img src={picked.image} alt={picked.name} className="aspect-video w-full object-cover" />
-              )}
-              <div className="space-y-4 p-5">
-                <h3 className="font-display text-2xl font-black">{picked.name}</h3>
-                <Button
-                  onClick={() => {
-                    buzz(30);
-                    setPicked(null);
-                  }}
-                  className="h-12 w-full rounded-2xl border border-primary/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90"
-                >
-                  يلا نلعب!
-                </Button>
+            {spinning ? (
+              <div
+                className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
+                  جارٍ الاختيار…
+                </p>
+                <div className="aspect-video w-full overflow-hidden bg-secondary">
+                  {reel?.image && (
+                    <motion.img
+                      key={reel.id}
+                      initial={{ opacity: 0.3, scale: 1.08 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.12 }}
+                      src={reel.image}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="space-y-3 p-5">
+                  <motion.h3
+                    key={`t-${reel?.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="truncate font-display text-xl font-black text-muted-foreground"
+                  >
+                    {reel?.name ?? "…"}
+                  </motion.h3>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <motion.div
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 2.8, ease: "easeOut" }}
+                      className="h-full bg-[var(--gradient-primary)]"
+                    />
+                  </div>
+                </div>
               </div>
-            </motion.div>
+            ) : (
+              picked && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: [0.5, 1.12, 1] }}
+                  exit={{ opacity: 0, scale: 0.94 }}
+                  transition={{ duration: 0.55, times: [0, 0.6, 1], ease: "easeOut" }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-primary bg-card text-center shadow-[0_0_60px_-10px_color-mix(in_oklab,var(--primary)_85%,transparent)]"
+                >
+                  <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
+                    وش نلعب اليوم؟
+                  </p>
+                  {picked.image && (
+                    <img src={picked.image} alt={picked.name} className="aspect-video w-full object-cover" />
+                  )}
+                  <div className="space-y-4 p-5">
+                    <h3 className="font-display text-2xl font-black">{picked.name}</h3>
+                    <Button
+                      onClick={() => {
+                        buzzDouble();
+                        setPicked(null);
+                      }}
+                      className="h-12 w-full rounded-2xl border border-primary/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90"
+                    >
+                      يلا نلعب!
+                    </Button>
+                  </div>
+                </motion.div>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>
