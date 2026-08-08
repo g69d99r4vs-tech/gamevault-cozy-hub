@@ -101,7 +101,7 @@ function StoreGamePage() {
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-[2rem] border-2 border-yellow-500/25 bg-card shadow-[0_0_45px_-22px_rgba(234,179,8,0.9)]"
+          className="overflow-hidden rounded-[2rem] border-2 border-primary/25 bg-card shadow-[0_0_45px_-22px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
         >
           <SmartImage
             src={data?.image ?? image}
@@ -184,7 +184,7 @@ function StoreGamePage() {
                 );
               }}
               disabled={inPlan}
-              className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary/15 font-display text-base font-black text-primary hover:bg-primary/25"
+              className="h-12 w-full rounded-2xl border border-primary/70 bg-primary/15 font-display text-base font-black text-primary hover:bg-primary/25"
             >
               <CalendarPlus className="size-4" />
               {inPlan ? "في الإصدارات المرتقبة" : "إضافة للإصدارات المرتقبة"}
@@ -238,7 +238,7 @@ function StoreGamePage() {
                 variant={isFav ? "default" : "secondary"}
                 className={cn(
                   "h-12 rounded-2xl font-display text-base font-black",
-                  isFav && "border border-yellow-300/70 bg-primary text-primary-foreground",
+                  isFav && "border border-primary/70 bg-primary text-primary-foreground",
                 )}
               >
                 <Heart className={cn("size-4", isFav && "fill-current")} />
@@ -254,7 +254,7 @@ function StoreGamePage() {
                     "noopener,noreferrer",
                   );
                 }}
-                className="h-12 rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
+                className="h-12 rounded-2xl border border-primary/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90"
               >
                 <ExternalLink className="size-4" /> انقلني للموقع
               </Button>

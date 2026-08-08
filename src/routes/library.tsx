@@ -18,7 +18,7 @@ function CompletedCard({ entry, onOpen }: { entry: GameEntry; onOpen: () => void
   return (
     <button
       onClick={onOpen}
-      className="group relative block w-full overflow-hidden rounded-3xl border border-yellow-500/25 bg-card text-right shadow-[0_0_40px_-24px_rgba(234,179,8,0.9)] surface-hover"
+      className="group relative block w-full overflow-hidden rounded-3xl border border-primary/25 bg-card text-right shadow-[0_0_40px_-24px_color-mix(in_oklab,var(--primary)_70%,transparent)] surface-hover"
     >
       <div className="relative aspect-[16/7] w-full overflow-hidden sm:aspect-[21/7]">
         {entry.image ? (
@@ -34,7 +34,7 @@ function CompletedCard({ entry, onOpen }: { entry: GameEntry; onOpen: () => void
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-l from-background/70 via-transparent to-transparent" />
 
-        <span className="absolute right-4 top-4 rounded-full border border-yellow-500/40 bg-background/70 px-3 py-1 text-[11px] font-bold backdrop-blur">
+        <span className="absolute right-4 top-4 rounded-full border border-primary/40 bg-background/70 px-3 py-1 text-[11px] font-bold backdrop-blur">
           {s.badge.emoji} {s.badge.label}
         </span>
 

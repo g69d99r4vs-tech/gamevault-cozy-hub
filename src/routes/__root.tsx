@@ -14,6 +14,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
 import { startCloudSync } from "@/lib/store";
+import { DealAlerts } from "@/components/DealAlerts";
+import { applyAccent, usePrefs } from "@/lib/prefs";
 
 function NotFoundComponent() {
   return (
@@ -127,14 +129,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const accent = usePrefs((s) => s.accent);
 
   useEffect(() => startCloudSync(), []);
+  useEffect(() => applyAccent(accent), [accent]);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AppShell>
         <Outlet />
       </AppShell>
+      <DealAlerts />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

@@ -15,7 +15,7 @@ export function UserAvatar({
 }) {
   const src = avatarSrc(value);
   const style = { width: size, height: size } as const;
-  const frame = framed ? "border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.4)]" : "";
+  const frame = framed ? "border-2 border-primary shadow-[0_0_15px_color-mix(in_oklab,var(--primary)_70%,transparent)]" : "";
 
   return (
     <img

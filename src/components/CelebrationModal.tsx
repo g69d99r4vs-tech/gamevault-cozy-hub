@@ -49,7 +49,7 @@ export function CompletionCard({ game }: { game: GameEntry }) {
         </div>
       )}
 
-      <div className="rounded-2xl border-2 border-yellow-500/50 bg-secondary/30 px-4 py-3 text-center shadow-[0_0_20px_-8px_rgba(234,179,8,0.6)]">
+      <div className="rounded-2xl border-2 border-primary/50 bg-secondary/30 px-4 py-3 text-center shadow-[0_0_20px_-8px_color-mix(in_oklab,var(--primary)_70%,transparent)]">
         <p className="font-display text-base font-black gold-glow">
           {s.badge.emoji} {s.badge.label}
         </p>

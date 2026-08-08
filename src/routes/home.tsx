@@ -161,7 +161,7 @@ function Dashboard() {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="relative overflow-hidden rounded-[2rem] border-2 border-yellow-500/30 shadow-[0_0_35px_-18px_rgba(234,179,8,0.8)]"
+        className="relative overflow-hidden rounded-[2rem] border-2 border-primary/30 shadow-[0_0_35px_-18px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
       >
         {bannerImages.length > 1 ? (
           <div className="absolute inset-0 grid grid-cols-3">
@@ -194,7 +194,7 @@ function Dashboard() {
               <LogSessionSheet
                 entry={hero}
                 trigger={
-                  <Button className="h-12 w-fit rounded-2xl border-2 border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_35px_-4px_rgba(234,179,8,0.95)] hover:bg-primary/90">
+                  <Button className="h-12 w-fit rounded-2xl border-2 border-primary/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_35px_-4px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90">
 
                     <PlayCircle className="size-4" /> تسجيل جلسة
                   </Button>
@@ -207,7 +207,7 @@ function Dashboard() {
               <h2 className="font-display text-2xl font-black md:text-3xl">ابدأ رحلتك الجديدة اليوم</h2>
               <p className="text-xs text-muted-foreground">{quote}</p>
               <Link to="/upcoming" search={{ tab: "toBeat" as const }}>
-                <Button className="h-12 w-fit rounded-2xl border border-yellow-300/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]">
+                <Button className="h-12 w-fit rounded-2xl border border-primary/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]">
                   <Plus className="size-4" /> اختر لعبة من الخطة
                 </Button>
               </Link>
@@ -224,7 +224,7 @@ function Dashboard() {
       {/* B — تحدي الأسبوع */}
       <section>
         <SectionTitle title="تحدي الأسبوع" subtitle="ساعات اللعب خلال آخر ٧ أيام" />
-        <div className="rounded-[2rem] border-2 border-yellow-500/40 bg-card p-5 shadow-[0_0_30px_-16px_rgba(234,179,8,0.8)]">
+        <div className="rounded-[2rem] border-2 border-primary/40 bg-card p-5 shadow-[0_0_30px_-16px_color-mix(in_oklab,var(--primary)_70%,transparent)]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <UserAvatar value={data.profile.avatar} size={38} />
@@ -271,7 +271,7 @@ function Dashboard() {
           <Link
             to="/game/$id"
             params={{ id: String(gotm.game.id) }}
-            className="relative block overflow-hidden rounded-[2rem] border-2 border-yellow-500/60 shadow-[0_0_25px_-8px_rgba(234,179,8,0.5)]"
+            className="relative block overflow-hidden rounded-[2rem] border-2 border-primary/60 shadow-[0_0_25px_-8px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
           >
             {gotm.game.image && (
               <img

@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { buzz } from "@/lib/haptics";
 import { getGameBySlug } from "@/lib/rawg";
+import { ACCENTS, usePrefs } from "@/lib/prefs";
+import { ensureNotificationPermission } from "@/lib/notify";
+import { cn } from "@/lib/utils";
 import { RETRO_IMPORT } from "@/lib/retro-import";
 import {
   Download,
@@ -37,7 +40,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { ReactNode } from "react";
 
-
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
@@ -55,32 +57,24 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-const NOTIFY_KEY = "gamehub:notify";
-const APPEARANCE_KEY = "gamehub:appearance";
-
-const notifications = [
-  { id: "activity", label: "تنبيهات نشاط أخوك" },
-  { id: "releases", label: "تذكير الإصدارات" },
-  { id: "showdown", label: "تحديثات التحدي الأسبوعي" },
+const LEADS = [
+  { v: 1 as const, l: "قبل يوم" },
+  { v: 3 as const, l: "قبل 3 أيام" },
+  { v: 7 as const, l: "أسبوع" },
 ];
-
-const appearance = [
-  { id: "animations", label: "حركات الواجهة" },
-  { id: "haptics", label: "الاهتزاز عند اللمس" },
-];
-
-function readFlags(key: string, ids: string[]) {
-  if (typeof localStorage === "undefined") return Object.fromEntries(ids.map((i) => [i, true]));
-  try {
-    const raw = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, boolean>;
-    return Object.fromEntries(ids.map((i) => [i, raw[i] ?? true]));
-  } catch {
-    return Object.fromEntries(ids.map((i) => [i, true]));
-  }
-}
 
 /** بطاقة قسم بأسلوب VIP مع فاصل ذهبي */
-function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title: string; hint?: string; children: ReactNode }) {
+function Card({
+  icon: Icon,
+  title,
+  hint,
+  children,
+}: {
+  icon: typeof Bell;
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="overflow-hidden rounded-[2rem] border border-border bg-card">
       <div className="flex items-center gap-3 p-5">
@@ -92,7 +86,7 @@ function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title:
           {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
         </div>
       </div>
-      <div className="h-px bg-gradient-to-l from-transparent via-yellow-500/40 to-transparent" />
+      <div className="h-px bg-gradient-to-l from-transparent via-primary/40 to-transparent" />
       <div className="space-y-4 p-5">{children}</div>
     </section>
   );
@@ -100,29 +94,33 @@ function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title:
 
 function ToggleRow({
   label,
-  storageKey,
-  id,
-  defaults,
+  hint,
+  checked,
+  onChange,
+  extra,
 }: {
   label: string;
-  storageKey: string;
-  id: string;
-  defaults: Record<string, boolean>;
+  hint?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  extra?: ReactNode;
 }) {
-  const set = (v: boolean) => {
-    buzz(20);
-    const next = { ...defaults, [id]: v };
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-    defaults[id] = v;
-  };
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-secondary/40 px-4 py-3">
-      <Label className="text-sm">{label}</Label>
-      <Switch defaultChecked={defaults[id] ?? true} onCheckedChange={set} />
+    <div className="rounded-2xl bg-secondary/40 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <Label className="text-sm">{label}</Label>
+          {hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p>}
+        </div>
+        <Switch
+          checked={checked}
+          onCheckedChange={(v) => {
+            buzz([40, 30, 40]);
+            onChange(v);
+          }}
+        />
+      </div>
+      {checked && extra ? <div className="mt-3">{extra}</div> : null}
     </div>
   );
 }
@@ -140,8 +138,18 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
 
-  const notifyFlags = readFlags(NOTIFY_KEY, notifications.map((n) => n.id));
-  const appearanceFlags = readFlags(APPEARANCE_KEY, appearance.map((a) => a.id));
+  const prefs = usePrefs();
+
+  /** يطلب إذن الإشعارات ويسجّل عامل الخدمة قبل تفعيل أي تنبيه */
+  const enableNotify = async (v: boolean, apply: (x: boolean) => void) => {
+    if (!v) {
+      apply(false);
+      return;
+    }
+    const ok = await ensureNotificationPermission();
+    apply(ok);
+    if (!ok) toast.error("تحتاج السماح بالإشعارات من المتصفح");
+  };
 
   const importRetro = async () => {
     buzz(30);
@@ -175,7 +183,6 @@ function SettingsPage() {
       setImporting(false);
     }
   };
-
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ users }, null, 2)], { type: "application/json" });
@@ -212,13 +219,46 @@ function SettingsPage() {
         </div>
       </Card>
 
-      <Card icon={Bell} title="الإشعارات" hint="تنبيهات الويب">
-        {notifications.map((n) => (
-          <ToggleRow key={n.id} id={n.id} label={n.label} storageKey={NOTIFY_KEY} defaults={notifyFlags} />
-        ))}
+      <Card icon={Bell} title="الإشعارات" hint="تنبيهات الويب — تعمل حتى والتطبيق مغلق">
+        <ToggleRow
+          label="عروض ألعابي المفضلة"
+          hint="ننبهك فور نزول خصم على لعبة في مفضلتك"
+          checked={prefs.notifyDeals}
+          onChange={(v) => void enableNotify(v, (x) => prefs.set({ notifyDeals: x }))}
+        />
+        <ToggleRow
+          label="تذكير الإصدارات"
+          checked={prefs.notifyReleases}
+          onChange={(v) => void enableNotify(v, (x) => prefs.set({ notifyReleases: x }))}
+          extra={
+            <div className="flex gap-2">
+              {LEADS.map((l) => (
+                <Button
+                  key={l.v}
+                  size="sm"
+                  variant={prefs.releaseLead === l.v ? "default" : "secondary"}
+                  className="flex-1 rounded-xl text-[11px]"
+                  onClick={() => prefs.set({ releaseLead: l.v })}
+                >
+                  {l.l}
+                </Button>
+              ))}
+            </div>
+          }
+        />
+        <ToggleRow
+          label="إشعارات الذكريات"
+          hint="ذكرى ختم ألعابك — تستثني «تم الختم قديماً» تمامًا"
+          checked={prefs.notifyMemories}
+          onChange={(v) => void enableNotify(v, (x) => prefs.set({ notifyMemories: x }))}
+        />
       </Card>
 
-      <Card icon={Users} title={`الربط مع ${other.profile.name}`} hint="الحساب المقترن في تحدي الأسبوع">
+      <Card
+        icon={Users}
+        title={`الربط مع ${other.profile.name}`}
+        hint="الحساب المقترن في تحدي الأسبوع"
+      >
         <div className="flex items-center gap-3 rounded-2xl bg-secondary/40 px-4 py-3">
           <UserAvatar value={other.profile.avatar} size={40} framed={false} />
           <div className="min-w-0 flex-1">
@@ -262,19 +302,26 @@ function SettingsPage() {
             </div>
           ))}
         </div>
-        <Button className="w-full rounded-xl" disabled={importing} onClick={() => void importRetro()}>
+        <Button
+          className="w-full rounded-xl"
+          disabled={importing}
+          onClick={() => void importRetro()}
+        >
           {importing ? <Loader2 className="size-4 animate-spin" /> : <Archive className="size-4" />}
           {importing ? "جارٍ الاستيراد…" : "استيراد المكتبة القديمة"}
         </Button>
       </Card>
-
 
       <Card icon={HardDrive} title="النسخ الاحتياطي" hint="لا تفقد سجل ألعابك أبدًا">
         <div className="flex flex-wrap gap-2">
           <Button onClick={exportJson} className="rounded-xl">
             <Download className="size-4" /> تصدير JSON
           </Button>
-          <Button variant="secondary" className="rounded-xl" onClick={() => fileRef.current?.click()}>
+          <Button
+            variant="secondary"
+            className="rounded-xl"
+            onClick={() => fileRef.current?.click()}
+          >
             <Upload className="size-4" /> استيراد JSON
           </Button>
           <input
@@ -303,10 +350,12 @@ function SettingsPage() {
           </AlertDialogTrigger>
           <AlertDialogContent dir="rtl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-right font-display">متأكد من التصفير؟</AlertDialogTitle>
+              <AlertDialogTitle className="text-right font-display">
+                متأكد من التصفير؟
+              </AlertDialogTitle>
               <AlertDialogDescription className="text-right">
-                سيتم حذف كل ألعابك وساعاتك ونقاط الخبرة والمستوى والنشاطات نهائيًا من الجهاز والسحابة. لا
-                يمكن التراجع — يُنصح بتصدير نسخة احتياطية أولاً.
+                سيتم حذف كل ألعابك وساعاتك ونقاط الخبرة والمستوى والنشاطات نهائيًا من الجهاز
+                والسحابة. لا يمكن التراجع — يُنصح بتصدير نسخة احتياطية أولاً.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-2">
@@ -325,10 +374,45 @@ function SettingsPage() {
         </AlertDialog>
       </Card>
 
-      <Card icon={Palette} title="المظهر" hint="حركات الواجهة والاهتزاز">
-        {appearance.map((a) => (
-          <ToggleRow key={a.id} id={a.id} label={a.label} storageKey={APPEARANCE_KEY} defaults={appearanceFlags} />
-        ))}
+      <Card icon={Palette} title="تخصيص المظهر" hint="لون التمييز، الحركات والاهتزاز">
+        <div>
+          <Label className="mb-3 block text-xs text-muted-foreground">لون التمييز</Label>
+          <div className="flex flex-wrap gap-3">
+            {ACCENTS.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                aria-label={a.label}
+                onClick={() => {
+                  buzz([40, 30, 40]);
+                  prefs.setAccent(a.id);
+                  toast.success(`تم تفعيل اللون ${a.label}`);
+                }}
+                className={cn(
+                  "size-11 rounded-full border-2 transition-transform hover:scale-110",
+                  prefs.accent === a.id
+                    ? "border-foreground scale-110 shadow-[0_0_18px_-4px_color-mix(in_oklab,var(--primary)_80%,transparent)]"
+                    : "border-border",
+                )}
+                style={{ background: a.swatch }}
+              />
+            ))}
+          </div>
+        </div>
+        <ToggleRow
+          label="حركات الواجهة"
+          checked={prefs.animations}
+          onChange={(v) => prefs.set({ animations: v })}
+        />
+        <ToggleRow
+          label="الاهتزاز عند اللمس"
+          hint="نبضة مزدوجة عند تسجيل جلسة أو إضافة أو ختم لعبة"
+          checked={prefs.haptics}
+          onChange={(v) => {
+            prefs.set({ haptics: v });
+            if (v) navigator.vibrate?.([40, 30, 40]);
+          }}
+        />
       </Card>
     </div>
   );

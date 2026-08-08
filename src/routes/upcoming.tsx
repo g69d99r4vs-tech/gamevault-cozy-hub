@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCurrentData, useStore, type GameEntry } from "@/lib/store";
 import { SectionTitle, EmptyState } from "@/components/ui-bits";
 import { Countdown } from "@/components/Countdown";
 import { gdate, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
-import { buzz } from "@/lib/haptics";
+import { buzz, buzzDouble } from "@/lib/haptics";
 import { SmartImage } from "@/components/SmartImage";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
@@ -14,7 +14,7 @@ import { DateEditDialog } from "@/components/DateEditDialog";
 
 export const Route = createFileRoute("/upcoming")({
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search['tab'] === "toBeat" ? ("toBeat" as const) : ("releases" as const),
+    tab: search["tab"] === "toBeat" ? ("toBeat" as const) : ("releases" as const),
   }),
   head: () => ({
     meta: [
@@ -24,7 +24,10 @@ export const Route = createFileRoute("/upcoming")({
         content: "إصدارات مرتقبة بعدّاد تنازلي حيّ، وقائمة «ناوي أختمها» بترتيبك الخاص.",
       },
       { property: "og:title", content: "الخطة — GameHub" },
-      { property: "og:description", content: "خطتك القادمة: الإصدارات المرتقبة والألعاب التي تنوي ختمها." },
+      {
+        property: "og:description",
+        content: "خطتك القادمة: الإصدارات المرتقبة والألعاب التي تنوي ختمها.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -46,7 +49,16 @@ function PlanPage() {
   const [dragId, setDragId] = useState<number | null>(null);
   const [picked, setPicked] = useState<GameEntry | null>(null);
   const [editing, setEditing] = useState<GameEntry | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [reel, setReel] = useState<GameEntry | null>(null);
+  const spinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(
+    () => () => {
+      if (spinRef.current) clearTimeout(spinRef.current);
+    },
+    [],
+  );
 
   const releases = [...data.entries]
     .filter((e) => e.status === "hype")
@@ -64,8 +76,30 @@ function PlanPage() {
       toast("قائمة «ناوي أختمها» فاضية — أضف ألعاب أولاً");
       return;
     }
-    buzz(40);
-    setPicked(pool[Math.floor(Math.random() * pool.length)]!);
+    if (spinning) return;
+    buzzDouble();
+    setPicked(null);
+    setSpinning(true);
+
+    const winner = pool[Math.floor(Math.random() * pool.length)]!;
+    const total = 2800;
+    let elapsed = 0;
+
+    const step = () => {
+      setReel(pool[Math.floor(Math.random() * pool.length)]!);
+      const progress = elapsed / total;
+      const delay = 55 + progress * progress * 320;
+      elapsed += delay;
+      if (elapsed < total) {
+        spinRef.current = setTimeout(step, delay);
+      } else {
+        setSpinning(false);
+        setReel(null);
+        setPicked(winner);
+        buzzDouble();
+      }
+    };
+    step();
   };
 
   const move = (from: number, to: number) => {
@@ -84,7 +118,7 @@ function PlanPage() {
       <button
         type="button"
         onClick={pickRandom}
-        className="group flex w-full items-center gap-4 overflow-hidden rounded-[1.75rem] border-2 border-yellow-500/35 bg-card px-5 py-4 text-right shadow-[0_0_35px_-18px_rgba(234,179,8,0.9)] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+        className="group flex w-full items-center gap-4 overflow-hidden rounded-[1.75rem] border-2 border-primary/35 bg-card px-5 py-4 text-right shadow-[0_0_35px_-18px_color-mix(in_oklab,var(--primary)_70%,transparent)] transition-transform hover:scale-[1.01] active:scale-[0.99]"
       >
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/12">
           <Dices className="size-6 gold-glow transition-transform duration-500 group-hover:rotate-180" />
@@ -243,7 +277,6 @@ function PlanPage() {
                 </div>
               </Link>
 
-
               <div className="flex shrink-0 flex-col gap-1">
                 <Button
                   size="icon"
@@ -271,43 +304,92 @@ function PlanPage() {
       ) : (
         <EmptyState text="ما فيه ألعاب في «ناوي أختمها» — أضف لعبة واختر حالة «الانتظار»." />
       )}
-    <AnimatePresence>
-        {picked && (
+      <AnimatePresence>
+        {(spinning || picked) && (
           <motion.div
             dir="rtl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setPicked(null)}
+            onClick={() => !spinning && setPicked(null)}
             className="fixed inset-0 z-[70] grid place-items-center bg-black/85 p-4 backdrop-blur-sm"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 300, damping: 24 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
-            >
-              <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
-                وش نلعب اليوم؟
-              </p>
-              {picked.image && (
-                <img src={picked.image} alt={picked.name} className="aspect-video w-full object-cover" />
-              )}
-              <div className="space-y-4 p-5">
-                <h3 className="font-display text-2xl font-black">{picked.name}</h3>
-                <Button
-                  onClick={() => {
-                    buzz(30);
-                    setPicked(null);
-                  }}
-                  className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
-                >
-                  يلا نلعب!
-                </Button>
+            {spinning ? (
+              <div
+                className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card text-center shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
+                  جارٍ الاختيار…
+                </p>
+                <div className="aspect-video w-full overflow-hidden bg-secondary">
+                  {reel?.image && (
+                    <motion.img
+                      key={reel.id}
+                      initial={{ opacity: 0.3, scale: 1.08 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.12 }}
+                      src={reel.image}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="space-y-3 p-5">
+                  <motion.h3
+                    key={`t-${reel?.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="truncate font-display text-xl font-black text-muted-foreground"
+                  >
+                    {reel?.name ?? "…"}
+                  </motion.h3>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <motion.div
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 2.8, ease: "easeOut" }}
+                      className="h-full bg-[var(--gradient-primary)]"
+                    />
+                  </div>
+                </div>
               </div>
-            </motion.div>
+            ) : (
+              picked && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: [0.5, 1.12, 1] }}
+                  exit={{ opacity: 0, scale: 0.94 }}
+                  transition={{ duration: 0.55, times: [0, 0.6, 1], ease: "easeOut" }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full max-w-sm overflow-hidden rounded-3xl border-2 border-primary bg-card text-center shadow-[0_0_60px_-10px_color-mix(in_oklab,var(--primary)_85%,transparent)]"
+                >
+                  <p className="bg-primary/10 px-5 py-4 font-display text-xl font-black text-primary">
+                    وش نلعب اليوم؟
+                  </p>
+                  {picked.image && (
+                    <img
+                      src={picked.image}
+                      alt={picked.name}
+                      className="aspect-video w-full object-cover"
+                    />
+                  )}
+                  <div className="space-y-4 p-5">
+                    <h3 className="font-display text-2xl font-black">{picked.name}</h3>
+                    <Button
+                      onClick={() => {
+                        buzzDouble();
+                        setPicked(null);
+                      }}
+                      className="h-12 w-full rounded-2xl border border-primary/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90"
+                    >
+                      يلا نلعب!
+                    </Button>
+                  </div>
+                </motion.div>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>

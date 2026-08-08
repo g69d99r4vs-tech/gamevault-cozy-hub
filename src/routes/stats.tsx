@@ -16,14 +16,18 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CheckCircle2, Timer, CalendarDays, Sun, Percent, Flame } from "lucide-react";
+import { CheckCircle2, Timer, CalendarDays, Sun, Percent, Flame, Crown } from "lucide-react";
 import { difficultyLabel } from "@/lib/store";
+import { TugOfWar } from "@/components/TugOfWar";
 
 export const Route = createFileRoute("/stats")({
   head: () => ({
     meta: [
       { title: "الإحصائيات — GameHub" },
-      { name: "description", content: "أرقام نظيفة: متوسط اللعب اليومي، معدل التختيم الشهري، ومقارنة بين فيصل ومشعل." },
+      {
+        name: "description",
+        content: "أرقام نظيفة: متوسط اللعب اليومي، معدل التختيم الشهري، ومقارنة بين فيصل ومشعل.",
+      },
       { property: "og:title", content: "الإحصائيات — GameHub" },
       { property: "og:description", content: "تحليلات مبسّطة لحياتك في الألعاب مع مقارنة مباشرة." },
     ],
@@ -80,7 +84,11 @@ function StatsPage() {
         />
         <StatCard
           label="أصعب لعبة ختمتها"
-          value={s.hardest ? `${s.hardest.name} · ${difficultyLabel(s.hardest.difficulty ?? "normal")}` : "—"}
+          value={
+            s.hardest
+              ? `${s.hardest.name} · ${difficultyLabel(s.hardest.difficulty ?? "normal")}`
+              : "—"
+          }
           icon={Flame}
           index={1}
           hint="حسب مستوى الصعوبة الذي سجّلته"
@@ -131,14 +139,17 @@ function StatsPage() {
 
         <div className="grid gap-3 md:grid-cols-2">
           {[
-            { p: users.faisal.profile, st: a },
-            { p: users.mishal.profile, st: b },
+            { p: users.faisal.profile, st: a, wins: a.hours > b.hours },
+            { p: users.mishal.profile, st: b, wins: b.hours > a.hours },
           ].map((u) => (
             <div key={u.p.name} className="rounded-3xl border border-border bg-card p-5">
               <div className="flex items-center gap-3">
                 <UserAvatar value={u.p.avatar} size={48} />
                 <div className="min-w-0">
-                  <h3 className="font-display text-lg font-extrabold">{u.p.name}</h3>
+                  <h3 className="flex items-center gap-1 font-display text-lg font-extrabold">
+                    <bdi>{u.p.name}</bdi>
+                    {u.wins && <Crown className="size-4 text-primary" />}
+                  </h3>
                   <p className="truncate text-xs text-muted-foreground">{u.p.bio}</p>
                 </div>
               </div>
@@ -150,6 +161,41 @@ function StatsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <TugOfWar
+            label="ساعات اللعب"
+            leftName={users.faisal.profile.name}
+            rightName={users.mishal.profile.name}
+            left={Number(a.hours.toFixed(1))}
+            right={Number(b.hours.toFixed(1))}
+            format={(v) => `${num(v, 1)} ساعة`}
+          />
+          <TugOfWar
+            label="الألعاب المكتملة"
+            leftName={users.faisal.profile.name}
+            rightName={users.mishal.profile.name}
+            left={a.completed}
+            right={b.completed}
+            format={(v) => num(v)}
+          />
+          <TugOfWar
+            label="نسبة الإكمال"
+            leftName={users.faisal.profile.name}
+            rightName={users.mishal.profile.name}
+            left={Number(a.completionRate.toFixed(1))}
+            right={Number(b.completionRate.toFixed(1))}
+            format={(v) => `${num(v, 1)}%`}
+          />
+          <TugOfWar
+            label="حجم المكتبة"
+            leftName={users.faisal.profile.name}
+            rightName={users.mishal.profile.name}
+            left={a.total}
+            right={b.total}
+            format={(v) => num(v)}
+          />
         </div>
 
         <div className="rounded-3xl border border-border bg-card p-4">
