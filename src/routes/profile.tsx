@@ -11,7 +11,10 @@ import { gdate, num } from "@/lib/dates";
 import { UserSwitcher } from "@/components/UserSwitcher";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { UserAvatar } from "@/components/UserAvatar";
-import { CheckCircle2, Timer, Sun, CalendarDays } from "lucide-react";
+import { CheckCircle2, Timer, Sun, CalendarDays, Crown } from "lucide-react";
+import { HeatMap } from "@/components/HeatMap";
+import { TugOfWar } from "@/components/TugOfWar";
+import { TopTenCarousel } from "@/components/TopTenCarousel";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
