@@ -55,29 +55,11 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-const NOTIFY_KEY = "gamehub:notify";
-const APPEARANCE_KEY = "gamehub:appearance";
-
-const notifications = [
-  { id: "activity", label: "تنبيهات نشاط أخوك" },
-  { id: "releases", label: "تذكير الإصدارات" },
-  { id: "showdown", label: "تحديثات التحدي الأسبوعي" },
+const LEADS = [
+  { v: 1 as const, l: "قبل يوم" },
+  { v: 3 as const, l: "قبل 3 أيام" },
+  { v: 7 as const, l: "أسبوع" },
 ];
-
-const appearance = [
-  { id: "animations", label: "حركات الواجهة" },
-  { id: "haptics", label: "الاهتزاز عند اللمس" },
-];
-
-function readFlags(key: string, ids: string[]) {
-  if (typeof localStorage === "undefined") return Object.fromEntries(ids.map((i) => [i, true]));
-  try {
-    const raw = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, boolean>;
-    return Object.fromEntries(ids.map((i) => [i, raw[i] ?? true]));
-  } catch {
-    return Object.fromEntries(ids.map((i) => [i, true]));
-  }
-}
 
 /** بطاقة قسم بأسلوب VIP مع فاصل ذهبي */
 function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title: string; hint?: string; children: ReactNode }) {
@@ -100,29 +82,33 @@ function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title:
 
 function ToggleRow({
   label,
-  storageKey,
-  id,
-  defaults,
+  hint,
+  checked,
+  onChange,
+  extra,
 }: {
   label: string;
-  storageKey: string;
-  id: string;
-  defaults: Record<string, boolean>;
+  hint?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  extra?: ReactNode;
 }) {
-  const set = (v: boolean) => {
-    buzz(20);
-    const next = { ...defaults, [id]: v };
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-    defaults[id] = v;
-  };
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-secondary/40 px-4 py-3">
-      <Label className="text-sm">{label}</Label>
-      <Switch defaultChecked={defaults[id] ?? true} onCheckedChange={set} />
+    <div className="rounded-2xl bg-secondary/40 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <Label className="text-sm">{label}</Label>
+          {hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p>}
+        </div>
+        <Switch
+          checked={checked}
+          onCheckedChange={(v) => {
+            buzz([40, 30, 40]);
+            onChange(v);
+          }}
+        />
+      </div>
+      {checked && extra ? <div className="mt-3">{extra}</div> : null}
     </div>
   );
 }
