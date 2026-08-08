@@ -99,29 +99,35 @@ export const usePrefs = create<PrefsState>()(
 /** هل الاهتزاز مفعّل — تُقرأ خارج React أيضًا */
 export const hapticsEnabled = () => usePrefs.getState().haptics;
 
-/** يطبّق لون التمييز على متغيّرات CSS الجذرية */
+/** يطبّق لون التمييز على متغيّرات CSS الجذرية عبر وسم style مخصّص (يتجنّب تعارض الترطيب) */
 export function applyAccent(id: AccentId) {
   if (typeof document === "undefined") return;
   const a = ACCENTS.find((x) => x.id === id) ?? ACCENTS[0]!;
-  const root = document.documentElement.style;
-  root.setProperty("--primary", a.primary);
-  root.setProperty("--primary-foreground", a.foreground);
-  root.setProperty("--ring", a.primary);
-  root.setProperty("--sidebar-primary", a.primary);
-  root.setProperty("--sidebar-primary-foreground", a.foreground);
-  root.setProperty("--sidebar-ring", a.primary);
-  root.setProperty("--accent", a.primary2);
-  root.setProperty("--accent-foreground", a.foreground);
-  root.setProperty("--chart-1", a.primary);
-  root.setProperty("--chart-2", a.primary2);
-  root.setProperty("--gradient-primary", `linear-gradient(120deg, ${a.primary}, ${a.primary2})`);
-  root.setProperty("--gradient-accent", `linear-gradient(120deg, ${a.primary}, ${a.primary2})`);
-  root.setProperty(
-    "--gradient-hero",
-    `linear-gradient(135deg, color-mix(in oklab, ${a.primary} 22%, transparent), color-mix(in oklab, ${a.primary2} 14%, transparent) 45%, oklch(0.13 0.006 70 / 0.9))`,
-  );
-  root.setProperty(
-    "--shadow-glow",
-    `0 0 45px -12px color-mix(in oklab, ${a.primary} 50%, transparent)`,
-  );
+  const vars = [
+    ["--primary", a.primary],
+    ["--primary-foreground", a.foreground],
+    ["--ring", a.primary],
+    ["--sidebar-primary", a.primary],
+    ["--sidebar-primary-foreground", a.foreground],
+    ["--sidebar-ring", a.primary],
+    ["--accent", a.primary2],
+    ["--accent-foreground", a.foreground],
+    ["--chart-1", a.primary],
+    ["--chart-2", a.primary2],
+    ["--gradient-primary", `linear-gradient(120deg, ${a.primary}, ${a.primary2})`],
+    ["--gradient-accent", `linear-gradient(120deg, ${a.primary}, ${a.primary2})`],
+    [
+      "--gradient-hero",
+      `linear-gradient(135deg, color-mix(in oklab, ${a.primary} 22%, transparent), color-mix(in oklab, ${a.primary2} 14%, transparent) 45%, oklch(0.13 0.006 70 / 0.9))`,
+    ],
+    ["--shadow-glow", `0 0 45px -12px color-mix(in oklab, ${a.primary} 50%, transparent)`],
+  ];
+
+  let tag = document.getElementById("gh-accent") as HTMLStyleElement | null;
+  if (!tag) {
+    tag = document.createElement("style");
+    tag.id = "gh-accent";
+    document.head.appendChild(tag);
+  }
+  tag.textContent = `:root{${vars.map(([k, v]) => `${k}:${v};`).join("")}}`;
 }
