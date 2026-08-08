@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCurrentData, useStore, type GameEntry } from "@/lib/store";
 import { SectionTitle, EmptyState } from "@/components/ui-bits";
 import { Countdown } from "@/components/Countdown";
 import { gdate, num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
-import { buzz } from "@/lib/haptics";
+import { buzz, buzzDouble } from "@/lib/haptics";
 import { SmartImage } from "@/components/SmartImage";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
@@ -46,6 +46,11 @@ function PlanPage() {
   const [dragId, setDragId] = useState<number | null>(null);
   const [picked, setPicked] = useState<GameEntry | null>(null);
   const [editing, setEditing] = useState<GameEntry | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [reel, setReel] = useState<GameEntry | null>(null);
+  const spinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (spinRef.current) clearTimeout(spinRef.current); }, []);
 
 
   const releases = [...data.entries]
