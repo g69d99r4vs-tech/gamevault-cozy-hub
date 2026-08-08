@@ -74,7 +74,7 @@ export function SessionBox({
   };
 
   return (
-    <div className="space-y-4 rounded-3xl border border-yellow-500/25 bg-secondary/50 p-4">
+    <div className="space-y-4 rounded-3xl border border-primary/25 bg-secondary/50 p-4">
       <Label className="text-sm font-bold">⏱️ تسجيل جلسة سريعة</Label>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {QUICK.map((m) => (
@@ -82,7 +82,7 @@ export function SessionBox({
             key={m}
             type="button"
             onClick={() => log(m)}
-            className="h-14 rounded-2xl border-2 border-yellow-500/50 bg-background/60 font-display text-base font-black text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
+            className="h-14 rounded-2xl border-2 border-primary/50 bg-background/60 font-display text-base font-black text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
           >
             {m < 60 ? `${m} د` : `${m / 60} س`}
           </button>
@@ -95,7 +95,7 @@ export function SessionBox({
             buzz([40, 60, 40]);
             onComplete();
           }}
-          className="h-14 w-full rounded-2xl border-2 border-yellow-500/70 bg-transparent font-display text-base font-black text-primary shadow-[0_0_30px_-14px_rgba(234,179,8,0.9)] transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
+          className="h-14 w-full rounded-2xl border-2 border-primary/70 bg-transparent font-display text-base font-black text-primary shadow-[0_0_30px_-14px_color-mix(in_oklab,var(--primary)_70%,transparent)] transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
         >
           تم الختم 🏆
         </button>

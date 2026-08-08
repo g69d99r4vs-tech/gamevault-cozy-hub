@@ -92,7 +92,7 @@ function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title:
           {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
         </div>
       </div>
-      <div className="h-px bg-gradient-to-l from-transparent via-yellow-500/40 to-transparent" />
+      <div className="h-px bg-gradient-to-l from-transparent via-primary/40 to-transparent" />
       <div className="space-y-4 p-5">{children}</div>
     </section>
   );

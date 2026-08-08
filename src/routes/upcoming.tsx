@@ -84,7 +84,7 @@ function PlanPage() {
       <button
         type="button"
         onClick={pickRandom}
-        className="group flex w-full items-center gap-4 overflow-hidden rounded-[1.75rem] border-2 border-yellow-500/35 bg-card px-5 py-4 text-right shadow-[0_0_35px_-18px_rgba(234,179,8,0.9)] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+        className="group flex w-full items-center gap-4 overflow-hidden rounded-[1.75rem] border-2 border-primary/35 bg-card px-5 py-4 text-right shadow-[0_0_35px_-18px_color-mix(in_oklab,var(--primary)_70%,transparent)] transition-transform hover:scale-[1.01] active:scale-[0.99]"
       >
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/12">
           <Dices className="size-6 gold-glow transition-transform duration-500 group-hover:rotate-180" />
@@ -302,7 +302,7 @@ function PlanPage() {
                     buzz(30);
                     setPicked(null);
                   }}
-                  className="h-12 w-full rounded-2xl border border-yellow-300/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_rgba(234,179,8,0.85)] hover:bg-primary/90"
+                  className="h-12 w-full rounded-2xl border border-primary/70 bg-primary font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90"
                 >
                   يلا نلعب!
                 </Button>

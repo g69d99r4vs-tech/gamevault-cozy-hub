@@ -66,7 +66,7 @@ export function Lightbox({
             src={images[index!]}
             alt={alt}
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[85vh] max-w-full rounded-2xl border border-yellow-500/25 object-contain shadow-[0_0_60px_-20px_rgba(234,179,8,0.6)]"
+            className="max-h-[85vh] max-w-full rounded-2xl border border-primary/25 object-contain shadow-[0_0_60px_-20px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
           />
 
           <button

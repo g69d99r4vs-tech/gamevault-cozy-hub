@@ -63,7 +63,7 @@ export function RailCard({
         "group relative shrink-0 snap-start overflow-hidden rounded-3xl border bg-card transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]",
         wide ? "w-[19rem] max-w-[82vw]" : "w-52 max-w-[60vw]",
         vip
-          ? "border-yellow-500/45 shadow-[0_0_30px_-14px_rgba(234,179,8,0.85)]"
+          ? "border-primary/45 shadow-[0_0_30px_-14px_color-mix(in_oklab,var(--primary)_70%,transparent)]"
           : "border-border",
       )}
     >
@@ -81,7 +81,7 @@ export function RailCard({
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/45 to-transparent" />
           {footer && (
-            <span className="absolute right-3 top-3 rounded-full border border-yellow-500/40 bg-background/80 px-2.5 py-1 text-[11px] font-bold backdrop-blur">
+            <span className="absolute right-3 top-3 rounded-full border border-primary/40 bg-background/80 px-2.5 py-1 text-[11px] font-bold backdrop-blur">
               {footer}
             </span>
           )}
@@ -124,7 +124,7 @@ export function TrophyRailCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.05, 0.4), duration: 0.35 }}
       onClick={onOpen}
-      className="group relative w-[19rem] max-w-[82vw] shrink-0 snap-start overflow-hidden rounded-3xl border border-yellow-500/45 bg-card text-right shadow-[0_0_30px_-14px_rgba(234,179,8,0.85)] transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]"
+      className="group relative w-[19rem] max-w-[82vw] shrink-0 snap-start overflow-hidden rounded-3xl border border-primary/45 bg-card text-right shadow-[0_0_30px_-14px_color-mix(in_oklab,var(--primary)_70%,transparent)] transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]"
     >
       <div className="relative aspect-[16/9] overflow-hidden">
         {entry.image ? (
@@ -138,7 +138,7 @@ export function TrophyRailCard({
           <div className="size-full bg-secondary" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/45 to-transparent" />
-        <span className="absolute right-3 top-3 rounded-full border border-yellow-500/40 bg-background/80 px-2.5 py-1 text-[11px] font-bold backdrop-blur">
+        <span className="absolute right-3 top-3 rounded-full border border-primary/40 bg-background/80 px-2.5 py-1 text-[11px] font-bold backdrop-blur">
           {s.badge.emoji} {s.badge.label}
         </span>
       </div>
@@ -205,7 +205,7 @@ export function PosterCard({
           aria-label={quickLabel}
           title={quickLabel}
           onClick={onQuick}
-          className="absolute left-2 top-2 grid size-8 place-items-center rounded-full border border-yellow-400/60 bg-background/80 text-primary backdrop-blur transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="absolute left-2 top-2 grid size-8 place-items-center rounded-full border border-primary/60 bg-background/80 text-primary backdrop-blur transition-colors hover:bg-primary hover:text-primary-foreground"
         >
           <Plus className="size-4" />
         </button>
