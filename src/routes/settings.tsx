@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { buzz } from "@/lib/haptics";
 import { getGameBySlug } from "@/lib/rawg";
-import { RETRO_IMPORT } from "@/lib/retro-import";
+import { ACCENTS, usePrefs } from "@/lib/prefs";
+import { ensureNotificationPermission } from "@/lib/notify";
+import { cn } from "@/lib/utils";
 import {
   Download,
   Upload,
@@ -126,8 +128,19 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
 
-  const notifyFlags = readFlags(NOTIFY_KEY, notifications.map((n) => n.id));
-  const appearanceFlags = readFlags(APPEARANCE_KEY, appearance.map((a) => a.id));
+  const prefs = usePrefs();
+
+  /** يطلب إذن الإشعارات ويسجّل عامل الخدمة قبل تفعيل أي تنبيه */
+  const enableNotify = async (v: boolean, apply: (x: boolean) => void) => {
+    if (!v) {
+      apply(false);
+      return;
+    }
+    const ok = await ensureNotificationPermission();
+    apply(ok);
+    if (!ok) toast.error("تحتاج السماح بالإشعارات من المتصفح");
+  };
+
 
   const importRetro = async () => {
     buzz(30);
@@ -198,10 +211,39 @@ function SettingsPage() {
         </div>
       </Card>
 
-      <Card icon={Bell} title="الإشعارات" hint="تنبيهات الويب">
-        {notifications.map((n) => (
-          <ToggleRow key={n.id} id={n.id} label={n.label} storageKey={NOTIFY_KEY} defaults={notifyFlags} />
-        ))}
+      <Card icon={Bell} title="الإشعارات" hint="تنبيهات الويب — تعمل حتى والتطبيق مغلق">
+        <ToggleRow
+          label="عروض ألعابي المفضلة"
+          hint="ننبهك فور نزول خصم على لعبة في مفضلتك"
+          checked={prefs.notifyDeals}
+          onChange={(v) => void enableNotify(v, (x) => prefs.set({ notifyDeals: x }))}
+        />
+        <ToggleRow
+          label="تذكير الإصدارات"
+          checked={prefs.notifyReleases}
+          onChange={(v) => void enableNotify(v, (x) => prefs.set({ notifyReleases: x }))}
+          extra={
+            <div className="flex gap-2">
+              {LEADS.map((l) => (
+                <Button
+                  key={l.v}
+                  size="sm"
+                  variant={prefs.releaseLead === l.v ? "default" : "secondary"}
+                  className="flex-1 rounded-xl text-[11px]"
+                  onClick={() => prefs.set({ releaseLead: l.v })}
+                >
+                  {l.l}
+                </Button>
+              ))}
+            </div>
+          }
+        />
+        <ToggleRow
+          label="إشعارات الذكريات"
+          hint="ذكرى ختم ألعابك — تستثني «تم الختم قديماً» تمامًا"
+          checked={prefs.notifyMemories}
+          onChange={(v) => void enableNotify(v, (x) => prefs.set({ notifyMemories: x }))}
+        />
       </Card>
 
       <Card icon={Users} title={`الربط مع ${other.profile.name}`} hint="الحساب المقترن في تحدي الأسبوع">
@@ -311,10 +353,45 @@ function SettingsPage() {
         </AlertDialog>
       </Card>
 
-      <Card icon={Palette} title="المظهر" hint="حركات الواجهة والاهتزاز">
-        {appearance.map((a) => (
-          <ToggleRow key={a.id} id={a.id} label={a.label} storageKey={APPEARANCE_KEY} defaults={appearanceFlags} />
-        ))}
+      <Card icon={Palette} title="تخصيص المظهر" hint="لون التمييز، الحركات والاهتزاز">
+        <div>
+          <Label className="mb-3 block text-xs text-muted-foreground">لون التمييز</Label>
+          <div className="flex flex-wrap gap-3">
+            {ACCENTS.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                aria-label={a.label}
+                onClick={() => {
+                  buzz([40, 30, 40]);
+                  prefs.setAccent(a.id);
+                  toast.success(`تم تفعيل اللون ${a.label}`);
+                }}
+                className={cn(
+                  "size-11 rounded-full border-2 transition-transform hover:scale-110",
+                  prefs.accent === a.id
+                    ? "border-foreground scale-110 shadow-[0_0_18px_-4px_color-mix(in_oklab,var(--primary)_80%,transparent)]"
+                    : "border-border",
+                )}
+                style={{ background: a.swatch }}
+              />
+            ))}
+          </div>
+        </div>
+        <ToggleRow
+          label="حركات الواجهة"
+          checked={prefs.animations}
+          onChange={(v) => prefs.set({ animations: v })}
+        />
+        <ToggleRow
+          label="الاهتزاز عند اللمس"
+          hint="نبضة مزدوجة عند تسجيل جلسة أو إضافة أو ختم لعبة"
+          checked={prefs.haptics}
+          onChange={(v) => {
+            prefs.set({ haptics: v });
+            if (v) navigator.vibrate?.([40, 30, 40]);
+          }}
+        />
       </Card>
     </div>
   );
