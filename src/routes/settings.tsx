@@ -14,6 +14,7 @@ import { getGameBySlug } from "@/lib/rawg";
 import { ACCENTS, usePrefs } from "@/lib/prefs";
 import { ensureNotificationPermission } from "@/lib/notify";
 import { cn } from "@/lib/utils";
+import { RETRO_IMPORT } from "@/lib/retro-import";
 import {
   Download,
   Upload,
