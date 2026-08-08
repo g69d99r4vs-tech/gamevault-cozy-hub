@@ -178,11 +178,11 @@
 
 @utility gold-glow {
   color: var(--primary);
-  text-shadow: 0 0 14px oklch(0.82 0.15 86 / 0.6);
-  filter: drop-shadow(0 0 8px oklch(0.82 0.15 86 / 0.55));
+  text-shadow: 0 0 14px color-mix(in oklab, var(--primary) 60%, transparent);
+  filter: drop-shadow(0 0 8px color-mix(in oklab, var(--primary) 55%, transparent));
 }
 
 @utility gold-ring {
-  border: 2px solid rgb(234 179 8);
-  box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 15px color-mix(in oklab, var(--primary) 40%, transparent);
 }
