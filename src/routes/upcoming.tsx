@@ -14,7 +14,7 @@ import { DateEditDialog } from "@/components/DateEditDialog";
 
 export const Route = createFileRoute("/upcoming")({
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search['tab'] === "toBeat" ? ("toBeat" as const) : ("releases" as const),
+    tab: search["tab"] === "toBeat" ? ("toBeat" as const) : ("releases" as const),
   }),
   head: () => ({
     meta: [
@@ -24,7 +24,10 @@ export const Route = createFileRoute("/upcoming")({
         content: "إصدارات مرتقبة بعدّاد تنازلي حيّ، وقائمة «ناوي أختمها» بترتيبك الخاص.",
       },
       { property: "og:title", content: "الخطة — GameHub" },
-      { property: "og:description", content: "خطتك القادمة: الإصدارات المرتقبة والألعاب التي تنوي ختمها." },
+      {
+        property: "og:description",
+        content: "خطتك القادمة: الإصدارات المرتقبة والألعاب التي تنوي ختمها.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -50,8 +53,12 @@ function PlanPage() {
   const [reel, setReel] = useState<GameEntry | null>(null);
   const spinRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => { if (spinRef.current) clearTimeout(spinRef.current); }, []);
-
+  useEffect(
+    () => () => {
+      if (spinRef.current) clearTimeout(spinRef.current);
+    },
+    [],
+  );
 
   const releases = [...data.entries]
     .filter((e) => e.status === "hype")
@@ -270,7 +277,6 @@ function PlanPage() {
                 </div>
               </Link>
 
-
               <div className="flex shrink-0 flex-col gap-1">
                 <Button
                   size="icon"
@@ -298,7 +304,7 @@ function PlanPage() {
       ) : (
         <EmptyState text="ما فيه ألعاب في «ناوي أختمها» — أضف لعبة واختر حالة «الانتظار»." />
       )}
-    <AnimatePresence>
+      <AnimatePresence>
         {(spinning || picked) && (
           <motion.div
             dir="rtl"
@@ -363,7 +369,11 @@ function PlanPage() {
                     وش نلعب اليوم؟
                   </p>
                   {picked.image && (
-                    <img src={picked.image} alt={picked.name} className="aspect-video w-full object-cover" />
+                    <img
+                      src={picked.image}
+                      alt={picked.name}
+                      className="aspect-video w-full object-cover"
+                    />
                   )}
                   <div className="space-y-4 p-5">
                     <h3 className="font-display text-2xl font-black">{picked.name}</h3>

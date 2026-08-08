@@ -40,7 +40,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { ReactNode } from "react";
 
-
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
@@ -65,7 +64,17 @@ const LEADS = [
 ];
 
 /** بطاقة قسم بأسلوب VIP مع فاصل ذهبي */
-function Card({ icon: Icon, title, hint, children }: { icon: typeof Bell; title: string; hint?: string; children: ReactNode }) {
+function Card({
+  icon: Icon,
+  title,
+  hint,
+  children,
+}: {
+  icon: typeof Bell;
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="overflow-hidden rounded-[2rem] border border-border bg-card">
       <div className="flex items-center gap-3 p-5">
@@ -142,7 +151,6 @@ function SettingsPage() {
     if (!ok) toast.error("تحتاج السماح بالإشعارات من المتصفح");
   };
 
-
   const importRetro = async () => {
     buzz(30);
     setImporting(true);
@@ -175,7 +183,6 @@ function SettingsPage() {
       setImporting(false);
     }
   };
-
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ users }, null, 2)], { type: "application/json" });
@@ -247,7 +254,11 @@ function SettingsPage() {
         />
       </Card>
 
-      <Card icon={Users} title={`الربط مع ${other.profile.name}`} hint="الحساب المقترن في تحدي الأسبوع">
+      <Card
+        icon={Users}
+        title={`الربط مع ${other.profile.name}`}
+        hint="الحساب المقترن في تحدي الأسبوع"
+      >
         <div className="flex items-center gap-3 rounded-2xl bg-secondary/40 px-4 py-3">
           <UserAvatar value={other.profile.avatar} size={40} framed={false} />
           <div className="min-w-0 flex-1">
@@ -291,19 +302,26 @@ function SettingsPage() {
             </div>
           ))}
         </div>
-        <Button className="w-full rounded-xl" disabled={importing} onClick={() => void importRetro()}>
+        <Button
+          className="w-full rounded-xl"
+          disabled={importing}
+          onClick={() => void importRetro()}
+        >
           {importing ? <Loader2 className="size-4 animate-spin" /> : <Archive className="size-4" />}
           {importing ? "جارٍ الاستيراد…" : "استيراد المكتبة القديمة"}
         </Button>
       </Card>
-
 
       <Card icon={HardDrive} title="النسخ الاحتياطي" hint="لا تفقد سجل ألعابك أبدًا">
         <div className="flex flex-wrap gap-2">
           <Button onClick={exportJson} className="rounded-xl">
             <Download className="size-4" /> تصدير JSON
           </Button>
-          <Button variant="secondary" className="rounded-xl" onClick={() => fileRef.current?.click()}>
+          <Button
+            variant="secondary"
+            className="rounded-xl"
+            onClick={() => fileRef.current?.click()}
+          >
             <Upload className="size-4" /> استيراد JSON
           </Button>
           <input
@@ -332,10 +350,12 @@ function SettingsPage() {
           </AlertDialogTrigger>
           <AlertDialogContent dir="rtl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-right font-display">متأكد من التصفير؟</AlertDialogTitle>
+              <AlertDialogTitle className="text-right font-display">
+                متأكد من التصفير؟
+              </AlertDialogTitle>
               <AlertDialogDescription className="text-right">
-                سيتم حذف كل ألعابك وساعاتك ونقاط الخبرة والمستوى والنشاطات نهائيًا من الجهاز والسحابة. لا
-                يمكن التراجع — يُنصح بتصدير نسخة احتياطية أولاً.
+                سيتم حذف كل ألعابك وساعاتك ونقاط الخبرة والمستوى والنشاطات نهائيًا من الجهاز
+                والسحابة. لا يمكن التراجع — يُنصح بتصدير نسخة احتياطية أولاً.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-2">

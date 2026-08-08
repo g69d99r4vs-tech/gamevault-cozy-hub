@@ -24,7 +24,10 @@ export const Route = createFileRoute("/stats")({
   head: () => ({
     meta: [
       { title: "الإحصائيات — GameHub" },
-      { name: "description", content: "أرقام نظيفة: متوسط اللعب اليومي، معدل التختيم الشهري، ومقارنة بين فيصل ومشعل." },
+      {
+        name: "description",
+        content: "أرقام نظيفة: متوسط اللعب اليومي، معدل التختيم الشهري، ومقارنة بين فيصل ومشعل.",
+      },
       { property: "og:title", content: "الإحصائيات — GameHub" },
       { property: "og:description", content: "تحليلات مبسّطة لحياتك في الألعاب مع مقارنة مباشرة." },
     ],
@@ -81,7 +84,11 @@ function StatsPage() {
         />
         <StatCard
           label="أصعب لعبة ختمتها"
-          value={s.hardest ? `${s.hardest.name} · ${difficultyLabel(s.hardest.difficulty ?? "normal")}` : "—"}
+          value={
+            s.hardest
+              ? `${s.hardest.name} · ${difficultyLabel(s.hardest.difficulty ?? "normal")}`
+              : "—"
+          }
           icon={Flame}
           index={1}
           hint="حسب مستوى الصعوبة الذي سجّلته"

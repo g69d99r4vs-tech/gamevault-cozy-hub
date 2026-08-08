@@ -66,7 +66,10 @@ function MePage() {
 
       {/* البطاقة الشخصية */}
       <section className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-6">
-        <div className="absolute inset-0 opacity-50" style={{ background: "var(--gradient-hero)" }} />
+        <div
+          className="absolute inset-0 opacity-50"
+          style={{ background: "var(--gradient-hero)" }}
+        />
         <div className="relative flex flex-wrap items-center gap-5">
           <AvatarPicker size={88} />
           <div className="min-w-0 flex-1">
@@ -78,7 +81,10 @@ function MePage() {
                 <span>{num(pct)}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-[var(--gradient-primary)]" style={{ width: `${pct}%` }} />
+                <div
+                  className="h-full rounded-full bg-[var(--gradient-primary)]"
+                  style={{ width: `${pct}%` }}
+                />
               </div>
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">اضغط على صورتك لاختيار شخصيتك</p>
@@ -88,7 +94,10 @@ function MePage() {
         <div className="relative mt-6 grid gap-3 md:grid-cols-2">
           <div>
             <Label className="mb-1 block text-xs">النبذة</Label>
-            <Textarea value={data.profile.bio} onChange={(e) => updateProfile({ bio: e.target.value })} />
+            <Textarea
+              value={data.profile.bio}
+              onChange={(e) => updateProfile({ bio: e.target.value })}
+            />
           </div>
           <div className="grid gap-3">
             <div>
@@ -115,7 +124,12 @@ function MePage() {
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <StatCard label="مكتملة" value={s.completed} icon={CheckCircle2} />
           <StatCard label="ساعات اللعب" value={s.hours} icon={Timer} index={1} />
-          <StatCard label="متوسط اللعب اليومي" value={`${num(s.avgDailyHours, 1)} ساعة`} icon={Sun} index={2} />
+          <StatCard
+            label="متوسط اللعب اليومي"
+            value={`${num(s.avgDailyHours, 1)} ساعة`}
+            icon={Sun}
+            index={2}
+          />
           <StatCard
             label="متوسط التختيم شهريًا"
             value={`${num(s.avgMonthlyCompleted, 1)} لعبة`}
