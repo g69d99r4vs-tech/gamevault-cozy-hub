@@ -30,13 +30,6 @@ export const Route = createFileRoute("/profile")({
   component: MePage,
 });
 
-const heatColor = (h: number) => {
-  if (!h) return "bg-secondary/60";
-  if (h < 2) return "bg-primary/30";
-  if (h < 4) return "bg-primary/55";
-  if (h < 7) return "bg-primary/80";
-  return "bg-primary";
-};
 
 function MePage() {
   const data = useCurrentData();
