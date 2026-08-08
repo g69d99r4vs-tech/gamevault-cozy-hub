@@ -116,8 +116,8 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(1000px 600px at 100% -10%, oklch(0.82 0.15 86 / 0.12), transparent 60%),
-      radial-gradient(800px 500px at 0% 0%, oklch(0.66 0.15 45 / 0.1), transparent 55%);
+      radial-gradient(1000px 600px at 100% -10%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 60%),
+      radial-gradient(800px 500px at 0% 0%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 55%);
     background-attachment: fixed;
   }
 
