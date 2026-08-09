@@ -154,7 +154,7 @@ function MePage() {
             ))}
           </div>
         ) : (
-          <EmptyState title="لا إنجازات بعد" hint="اختم أول لعبة وسجّل جلساتك لتفتح إنجازاتك" />
+          <EmptyState text="اختم أول لعبة وسجّل جلساتك لتفتح إنجازاتك" />
         )}
         <div className="flex flex-wrap gap-2">
           {badges.map((b) => (
