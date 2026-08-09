@@ -130,6 +130,8 @@ type State = {
   importData: (raw: string) => boolean;
   /** تصفير شامل: يمسح ألعاب ونشاطات المستخدم الحالي من الجهاز والسحابة */
   resetAll: () => Promise<void>;
+  /** تصفير التقدّم فقط: المستوى، الخبرة، الساعات والختمات — مع إبقاء المكتبة والخطة والملف */
+  resetProgress: () => void;
   hydrateFromCloud: () => Promise<void>;
 };
 
