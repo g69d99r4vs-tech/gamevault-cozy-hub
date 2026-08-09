@@ -442,6 +442,40 @@ export const useStore = create<State>()(
             },
           }));
         },
+        resetProgress: () =>
+          set((s) => {
+            const uid = s.currentUser;
+            const data = s.users[uid];
+            const entries = data.entries.map((e) =>
+              e.status === "completed" || e.hours > 0 || (e.sessions?.length ?? 0) > 0
+                ? {
+                    ...e,
+                    status: e.status === "completed" ? ("backlog" as Status) : e.status,
+                    hours: 0,
+                    sessions: [],
+                    progress: 0,
+                    fullCompletion: false,
+                    personalRating: 0,
+                    hallOfFame: false,
+                    legacy: false,
+                    startedAt: null,
+                    completedAt: null,
+                  }
+                : e,
+            );
+            pushEntries(uid, entries);
+            return {
+              users: {
+                ...s.users,
+                [uid]: {
+                  ...data,
+                  entries,
+                  activities: [],
+                  goals: data.goals.map((g) => ({ ...g, current: 0 })),
+                },
+              },
+            };
+          }),
         importData: (raw) => {
           try {
             const parsed = JSON.parse(raw) as { users: State["users"] };
