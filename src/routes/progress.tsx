@@ -68,14 +68,14 @@ function ProgressPage() {
           className="absolute inset-0 opacity-60"
           style={{ background: "var(--gradient-hero)" }}
         />
-        <div className="relative flex flex-wrap items-center gap-5">
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative">
             <UserAvatar value={data.profile.avatar} size={92} />
             <span className="absolute -bottom-1 -left-1 grid size-9 place-items-center rounded-full bg-[var(--gradient-primary)] font-display text-sm font-black text-primary-foreground ring-4 ring-card">
               {num(p.level)}
             </span>
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="w-full min-w-0 sm:flex-1">
             <p className="font-display text-3xl font-black gold-glow">{p.rank.ar}</p>
             <p className="text-xs text-muted-foreground">
               {p.rank.en} · المستوى {num(p.level)} من {num(100)}
@@ -98,7 +98,7 @@ function ProgressPage() {
             </div>
           </div>
           {p.next && (
-            <div className="rounded-2xl border border-border bg-secondary/40 p-4 text-center">
+            <div className="w-full rounded-2xl border border-border bg-secondary/40 p-4 text-center sm:w-auto">
               <p className="text-[11px] text-muted-foreground">المكافأة القادمة</p>
               <p className="mt-1 text-2xl">{p.next.icon}</p>
               <p className="font-display text-sm font-bold">{p.next.label}</p>
