@@ -11,9 +11,12 @@ import {
   Clock,
   Plus,
   Swords,
+  Flame,
+  ChevronLeft,
 } from "lucide-react";
 import { useCurrentData, useOtherData, useStore, type GameEntry } from "@/lib/store";
-import { activityIcon, gameOfMonth, memoryBox, computeStats, computeLevel } from "@/lib/stats";
+import { activityIcon, gameOfMonth, memoryBox, computeStats } from "@/lib/stats";
+import { computeProgress, computeStreak } from "@/lib/progress";
 import { gdate, num } from "@/lib/dates";
 import { SectionTitle } from "@/components/ui-bits";
 import { LogSessionSheet } from "@/components/GameEditDialog";
@@ -22,7 +25,6 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import heroFallback from "@/assets/hero-fallback.jpg";
-
 
 export const Route = createFileRoute("/home")({
   head: () => ({
@@ -49,7 +51,9 @@ const QUOTES = [
 ];
 
 /** دقائق اللعب خلال آخر 7 أيام */
-const weekMinutes = (entries: { legacy?: boolean; sessions: { date: string; minutes: number }[] }[]) => {
+const weekMinutes = (
+  entries: { legacy?: boolean; sessions: { date: string; minutes: number }[] }[],
+) => {
   const from = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
   return entries
     .filter((e) => !e.legacy)
@@ -65,14 +69,15 @@ function Dashboard() {
   const currentUser = useStore((s) => s.currentUser);
   const updateGame = useStore((s) => s.updateGame);
 
-
   const hero = data.entries.find((e) => e.status === "current") ?? null;
   const [reviewed, setReviewed] = useState<GameEntry | null>(null);
 
   const gotm = gameOfMonth(data.entries);
   const memories = memoryBox(data.entries);
   const stats = computeStats(data.entries);
-  const { level } = computeLevel(data.entries);
+  const prog = computeProgress(data.entries);
+  const level = prog.level;
+  const streak = computeStreak(data.entries);
 
   const monthHours = useMemo(() => {
     const key = new Date().toISOString().slice(0, 7);
@@ -104,7 +109,9 @@ function Dashboard() {
         who: users[uid].profile.name,
         avatar: users[uid].profile.avatar,
       }));
-    return [...tag("faisal"), ...tag("mishal")].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 12);
+    return [...tag("faisal"), ...tag("mishal")]
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, 12);
   }, [users]);
 
   const suggestion = useMemo(() => {
@@ -113,7 +120,6 @@ function Dashboard() {
     const seed = new Date().getDate() + currentUser.length;
     return pool[seed % pool.length]!;
   }, [data.entries, currentUser]);
-
 
   const [quoteIdx, setQuoteIdx] = useState(0);
   useEffect(() => setQuoteIdx(new Date().getDate() % QUOTES.length), []);
@@ -139,12 +145,44 @@ function Dashboard() {
             <UserAvatar value={data.profile.avatar} size={48} />
           </Link>
           <div className="min-w-0">
-            <h1 className="truncate font-display text-2xl font-black">مرحباً {data.profile.name}</h1>
+            <h1 className="truncate font-display text-2xl font-black">
+              مرحباً {data.profile.name}
+            </h1>
             <p className="text-[11px] text-muted-foreground">
               المستوى {num(level)} · {num(stats.hours, 1)} ساعة إجمالاً
             </p>
           </div>
         </div>
+        {/* بطاقة التقدّم المختصرة */}
+        <Link
+          to="/progress"
+          className="block rounded-3xl border border-primary/30 bg-card p-4 transition-colors hover:border-primary/60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--gradient-primary)] font-display text-sm font-black text-primary-foreground">
+              {num(level)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate font-display text-sm font-extrabold">{prog.rank.ar}</p>
+                <span className="flex items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-[10px] text-primary">
+                  <Flame className="size-3" />
+                  {num(streak)} يوم
+                </span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-[var(--gradient-primary)]"
+                  style={{ width: `${prog.pct}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {prog.max ? "أقصى مستوى" : `باقي ${num(prog.toNext)} XP للمستوى ${num(level + 1)}`}
+              </p>
+            </div>
+            <ChevronLeft className="size-4 shrink-0 text-muted-foreground" />
+          </div>
+        </Link>
         <div className="grid grid-cols-3 gap-2 rounded-3xl border border-border bg-card p-2">
           {quick.map((q) => (
             <div key={q.label} className="rounded-2xl bg-secondary/40 px-2 py-3 text-center">
@@ -195,7 +233,6 @@ function Dashboard() {
                 entry={hero}
                 trigger={
                   <Button className="h-12 w-fit rounded-2xl border-2 border-primary/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_35px_-4px_color-mix(in_oklab,var(--primary)_70%,transparent)] hover:bg-primary/90">
-
                     <PlayCircle className="size-4" /> تسجيل جلسة
                   </Button>
                 }
@@ -204,14 +241,15 @@ function Dashboard() {
           ) : (
             <>
               <p className="text-xs text-muted-foreground">ما فيه لعبة قيد اللعب</p>
-              <h2 className="font-display text-2xl font-black md:text-3xl">ابدأ رحلتك الجديدة اليوم</h2>
+              <h2 className="font-display text-2xl font-black md:text-3xl">
+                ابدأ رحلتك الجديدة اليوم
+              </h2>
               <p className="text-xs text-muted-foreground">{quote}</p>
               <Link to="/upcoming" search={{ tab: "toBeat" as const }}>
                 <Button className="h-12 w-fit rounded-2xl border border-primary/70 bg-primary px-6 font-display text-base font-black text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklab,var(--primary)_70%,transparent)] transition-transform hover:scale-[1.03] hover:bg-primary/90 active:scale-[0.97]">
                   <Plus className="size-4" /> اختر لعبة من الخطة
                 </Button>
               </Link>
-
             </>
           )}
         </div>
@@ -219,7 +257,6 @@ function Dashboard() {
 
       {/* صفوف سينمائية أفقية */}
       <CelebrationModal game={reviewed} review onClose={() => setReviewed(null)} />
-
 
       {/* B — تحدي الأسبوع */}
       <section>
@@ -369,7 +406,10 @@ function Dashboard() {
         <div className="max-h-72 space-y-2 overflow-y-auto rounded-3xl border border-border bg-card p-3">
           {pulse.length ? (
             pulse.map((a) => (
-              <div key={a.id} className="flex items-start gap-3 rounded-2xl bg-secondary/30 p-3 text-sm">
+              <div
+                key={a.id}
+                className="flex items-start gap-3 rounded-2xl bg-secondary/30 p-3 text-sm"
+              >
                 <UserAvatar value={a.avatar} size={34} framed={false} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate">
@@ -403,7 +443,6 @@ function Dashboard() {
           شاهد إحصائياتك وقارن نفسك مع {other.profile.name}
         </p>
       </Link>
-
     </div>
   );
 }

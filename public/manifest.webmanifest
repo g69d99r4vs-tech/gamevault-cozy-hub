@@ -1,0 +1,15 @@
+{
+  "name": "GameHub — لوحة الألعاب الشخصية",
+  "short_name": "GameHub",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/home",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#141312",
+  "theme_color": "#141312",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

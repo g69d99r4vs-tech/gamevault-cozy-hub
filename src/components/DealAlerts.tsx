@@ -7,7 +7,7 @@ import { steamSpecialsFn } from "@/lib/steam.functions";
 import { useFavorites } from "@/lib/store-favorites";
 import { usePrefs } from "@/lib/prefs";
 import { useCurrentData } from "@/lib/store";
-import { onceThisSession, onceToday, showLocalNotification } from "@/lib/notify";
+import { onceToday, showLocalNotification } from "@/lib/notify";
 import { num } from "@/lib/dates";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +21,9 @@ export function DealAlerts() {
   const notifyReleases = usePrefs((s) => s.notifyReleases);
   const releaseLead = usePrefs((s) => s.releaseLead);
   const entries = useCurrentData().entries;
-  const [deal, setDeal] = useState<Deal | null>(null);
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const deal = deals[0] ?? null;
+  const extra = Math.max(0, deals.length - 1);
 
   const { data: specials } = useQuery({
     queryKey: ["steam", "specials", "alerts"],
@@ -30,27 +32,28 @@ export function DealAlerts() {
     staleTime: 1000 * 60 * 30,
   });
 
-  // خصومات المفضلة — مرة واحدة لكل جلسة فقط
+  // خصومات المفضلة — تنبيه واحد مجمّع في اليوم
   useEffect(() => {
     if (!notifyDeals || !favorites.length) return;
     const live = new Map((specials ?? []).map((s) => [s.appId, s]));
-    const hit = favorites
+    const hits = favorites
       .map((f) => {
         const l = live.get(f.appId);
         const discount = l?.discount ?? f.discount ?? 0;
         return { appId: f.appId, name: l?.name ?? f.name, discount, image: l?.image ?? f.image };
       })
       .filter((d) => d.discount > 0)
-      .sort((a, b) => b.discount - a.discount)[0];
-    if (!hit) return;
-    if (!onceThisSession(`deal:${hit.appId}:${hit.discount}`)) return;
-    setDeal(hit);
+      .sort((a, b) => b.discount - a.discount);
+    if (!hits.length) return;
+    const signature = hits.map((d) => `${d.appId}:${d.discount}`).join(",");
+    if (!onceToday(`deals:${signature}`)) return;
+    setDeals(hits);
   }, [specials, favorites, notifyDeals]);
 
   // إخفاء تلقائي بعد 6 ثوانٍ
   useEffect(() => {
     if (!deal) return;
-    const t = setTimeout(() => setDeal(null), 6000);
+    const t = setTimeout(() => setDeals([]), 7000);
     return () => clearTimeout(t);
   }, [deal]);
 
@@ -107,7 +110,7 @@ export function DealAlerts() {
           drag="y"
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={(_, info) => {
-            if (info.offset.y > 60) setDeal(null);
+            if (info.offset.y > 60) setDeals([]);
           }}
           className="fixed inset-x-3 bottom-24 z-[80] mx-auto max-w-md lg:bottom-6"
         >
@@ -127,12 +130,18 @@ export function DealAlerts() {
               <p className="line-clamp-2 text-xs leading-relaxed">
                 🔥 خبر رهيب! لعبتك المفضلة <bdi className="font-bold">{deal.name}</bdi> عليها خصم{" "}
                 <span className="font-black text-primary">{num(deal.discount)}%</span> الآن!
+                {extra > 0 && (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    و{num(extra)} من مفضلاتك عليها عروض أيضًا.
+                  </span>
+                )}
               </p>
               <Button
                 asChild
                 size="sm"
                 className="mt-2 h-8 rounded-xl px-3 text-[11px] font-bold"
-                onClick={() => setDeal(null)}
+                onClick={() => setDeals([])}
               >
                 <Link to="/store/$appId" params={{ appId: String(deal.appId) }}>
                   شاهد العرض
@@ -142,7 +151,7 @@ export function DealAlerts() {
             <button
               type="button"
               aria-label="إغلاق"
-              onClick={() => setDeal(null)}
+              onClick={() => setDeals([])}
               className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary/70 text-muted-foreground"
             >
               <X className="size-4" />
