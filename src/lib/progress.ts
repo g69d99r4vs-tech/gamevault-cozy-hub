@@ -1,5 +1,7 @@
-import type { GameEntry } from "./store";
-import { difficultyMult } from "./stats";
+import { DIFFICULTIES, type Difficulty, type GameEntry } from "./store";
+
+const mult = (d: Difficulty | undefined) =>
+  DIFFICULTIES.find((x) => x.v === (d ?? "normal"))?.mult ?? 1;
 
 /* ============================ منحنى المستويات ============================ */
 
@@ -87,7 +89,7 @@ export function computeXp(entries: GameEntry[]) {
   const platinum = entries.filter((e) => e.fullCompletion && e.status === "completed").length;
   const completionXp = completed.reduce((sum, e) => {
     const length = Math.min(120, e.hours || e.playtimeEstimate || 0);
-    return sum + (150 + length * 4) * difficultyMult(e.difficulty);
+    return sum + (150 + length * 4) * mult(e.difficulty);
   }, 0);
   const sessionXp = entries.reduce((s, e) => s + Math.min(50, (e.sessions ?? []).length) * 15, 0);
   return Math.round(hours * 10 + completionXp + platinum * 250 + sessionXp);
