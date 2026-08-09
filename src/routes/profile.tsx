@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useCurrentData, useStore } from "@/lib/store";
-import { computeStats, computeWrap, yearGrid, computeLevel } from "@/lib/stats";
+import { computeStats, computeWrap, yearGrid, computeAchievements } from "@/lib/stats";
+import { computeProgress, computeStreak, unlockedRewards } from "@/lib/progress";
 import { SectionTitle, StatCard, EmptyState } from "@/components/ui-bits";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,8 @@ import { gdate, num } from "@/lib/dates";
 import { UserSwitcher } from "@/components/UserSwitcher";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { UserAvatar } from "@/components/UserAvatar";
-import { CheckCircle2, Timer, Sun, CalendarDays, Crown } from "lucide-react";
+import { CheckCircle2, Timer, Sun, CalendarDays, Crown, Flame, ChevronLeft } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { HeatMap } from "@/components/HeatMap";
 import { TugOfWar } from "@/components/TugOfWar";
 import { TopTenCarousel } from "@/components/TopTenCarousel";
@@ -36,7 +38,11 @@ function MePage() {
   const users = useStore((s) => s.users);
   const updateProfile = useStore((s) => s.updateProfile);
   const s = computeStats(data.entries);
-  const { level, pct } = computeLevel(data.entries);
+  const prog = computeProgress(data.entries);
+  const streak = computeStreak(data.entries);
+  const achievements = computeAchievements(data.entries);
+  const recent = achievements.filter((x) => x.unlocked).slice(-4).reverse();
+  const badges = unlockedRewards(prog.level);
 
   const thisYear = new Date().getFullYear();
   const [year] = useState(thisYear);
@@ -68,18 +74,37 @@ function MePage() {
           <div className="min-w-0 flex-1">
             <h1 className="font-display text-3xl font-black">{data.profile.name}</h1>
             <p className="text-sm text-muted-foreground">{data.profile.bio}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary">
+                {prog.rank.ar}
+              </span>
+              <span className="rounded-full bg-secondary/60 px-2.5 py-1 text-[11px]">
+                المستوى {num(prog.level)}
+              </span>
+              <span className="flex items-center gap-1 rounded-full bg-secondary/60 px-2.5 py-1 text-[11px]">
+                <Flame className="size-3 text-primary" />
+                {num(streak)} يوم متتالي
+              </span>
+            </div>
             <div className="mt-3 max-w-xs">
               <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
-                <span>المستوى {level}</span>
-                <span>{num(pct)}%</span>
+                <span>{num(prog.xp)} XP</span>
+                <span>{num(prog.pct)}%</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-secondary">
                 <div
                   className="h-full rounded-full bg-[var(--gradient-primary)]"
-                  style={{ width: `${pct}%` }}
+                  style={{ width: `${prog.pct}%` }}
                 />
               </div>
             </div>
+            <Link
+              to="/progress"
+              className="mt-3 inline-flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground"
+            >
+              عرض التقدّم والمكافآت
+              <ChevronLeft className="size-3" />
+            </Link>
             <p className="mt-2 text-[11px] text-muted-foreground">اضغط على صورتك لاختيار شخصيتك</p>
           </div>
         </div>
@@ -108,6 +133,39 @@ function MePage() {
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* الإنجازات والشارات */}
+      <section className="space-y-3">
+        <SectionTitle title="آخر الإنجازات" subtitle="أحدث ما فتحته" />
+        {recent.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {recent.map((x) => (
+              <div key={x.id} className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary/60 text-lg">
+                  {x.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-display text-sm font-bold">{x.title}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{x.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="لا إنجازات بعد" hint="اختم أول لعبة وسجّل جلساتك لتفتح إنجازاتك" />
+        )}
+        <div className="flex flex-wrap gap-2">
+          {badges.map((b) => (
+            <span
+              key={b.level}
+              className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-[11px]"
+            >
+              <span>{b.icon}</span>
+              {b.label}
+            </span>
+          ))}
         </div>
       </section>
 

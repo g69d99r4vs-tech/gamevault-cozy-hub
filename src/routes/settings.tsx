@@ -24,6 +24,7 @@ import {
   UserCog,
   HardDrive,
   TriangleAlert,
+  RotateCcw,
   Archive,
   Loader2,
 } from "lucide-react";
@@ -132,6 +133,8 @@ function SettingsPage() {
   const updateProfile = useStore((s) => s.updateProfile);
   const importData = useStore((s) => s.importData);
   const resetAll = useStore((s) => s.resetAll);
+  const resetProgress = useStore((s) => s.resetProgress);
+  const [confirmStep, setConfirmStep] = useState(false);
   const bulkAdd = useStore((s) => s.bulkAdd);
   const data = useCurrentData();
   const other = useOtherData();
@@ -335,6 +338,59 @@ function SettingsPage() {
             }}
           />
         </div>
+      </Card>
+
+      <Card
+        icon={RotateCcw}
+        title="تصفير التقدّم فقط"
+        hint={`يصفّر مستوى ونقاط خبرة وساعات وختمات ${data.profile.name} — المكتبة والخطة والملف الشخصي تبقى كما هي`}
+      >
+        <AlertDialog onOpenChange={(o) => !o && setConfirmStep(false)}>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="w-full rounded-xl border-destructive/50 text-destructive">
+              تصفير المستوى ونقاط الخبرة
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent dir="rtl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-right font-display">
+                {confirmStep ? "تأكيد أخير" : "تصفير التقدّم؟"}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-right">
+                {confirmStep
+                  ? "لا يمكن التراجع بعد الضغط. سيعود مستواك إلى 1 وتتصفّر الساعات والجلسات والختمات."
+                  : "سيتم تصفير المستوى ونقاط الخبرة والساعات والجلسات وحالة الختم وتواريخها، مع الإبقاء على ألعابك وقائمة الانتظار والمرتقبة وملفك الشخصي."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+              {confirmStep ? (
+                <AlertDialogAction
+                  className="rounded-xl"
+                  onClick={() => {
+                    buzz([40, 60, 40]);
+                    resetProgress();
+                    setConfirmStep(false);
+                    toast.success("تم تصفير التقدّم — بداية جديدة 🎮");
+                  }}
+                >
+                  نعم، صفّر تقدّمي
+                </AlertDialogAction>
+              ) : (
+                <Button
+                  variant="destructive"
+                  className="rounded-xl"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setConfirmStep(true);
+                  }}
+                >
+                  متابعة
+                </Button>
+              )}
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
 
       <Card
