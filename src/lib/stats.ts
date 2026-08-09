@@ -1,4 +1,5 @@
 import { DIFFICULTIES, type GameEntry, type Activity, type Difficulty } from "./store";
+import { computeProgress } from "./progress";
 
 /** الألعاب المختومة قديمًا تُستثنى من كل المعدلات والخرائط الزمنية */
 export const activeEntries = (entries: GameEntry[]) => entries.filter((e) => !e.legacy);
