@@ -270,23 +270,7 @@ export const activityIcon = (t: Activity["type"]) =>
 
 /** XP: ساعة = 10 نقاط، لعبة مكتملة = 150 × معامل الصعوبة (+ طولها)، بلاتينيوم = 250 */
 export function computeLevel(entries: GameEntry[]) {
-  const hours = entries.reduce((s, e) => s + (e.hours || 0), 0);
-  const completedGames = entries.filter((e) => e.status === "completed");
-  const platinum = entries.filter((e) => e.fullCompletion).length;
-  const completionXp = completedGames.reduce((sum, e) => {
-    const mult = difficultyMult(e.difficulty);
-    const length = Math.min(120, e.hours || e.playtimeEstimate || 0);
-    return sum + (150 + length * 4) * mult;
-  }, 0);
-  const xp = Math.round(hours * 10 + completionXp + platinum * 250);
-  // منحنى: مستوى n يحتاج 150 * n^1.6
-  const need = (n: number) => Math.round(150 * Math.pow(n, 1.6));
-  let level = 1;
-  while (level < 99 && xp >= need(level + 1)) level += 1;
-  const curr = need(level);
-  const nextNeed = need(level + 1);
-  const pct = Math.min(100, ((xp - curr) / Math.max(1, nextNeed - curr)) * 100);
-  return { xp, level, pct, toNext: Math.max(0, nextNeed - xp) };
+  return computeProgress(entries);
 }
 
 /* ============================ ودجات اللوحة ============================ */
