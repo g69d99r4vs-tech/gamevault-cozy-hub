@@ -11,9 +11,12 @@ import {
   Clock,
   Plus,
   Swords,
+  Flame,
+  ChevronLeft,
 } from "lucide-react";
 import { useCurrentData, useOtherData, useStore, type GameEntry } from "@/lib/store";
-import { activityIcon, gameOfMonth, memoryBox, computeStats, computeLevel } from "@/lib/stats";
+import { activityIcon, gameOfMonth, memoryBox, computeStats } from "@/lib/stats";
+import { computeProgress, computeStreak } from "@/lib/progress";
 import { gdate, num } from "@/lib/dates";
 import { SectionTitle } from "@/components/ui-bits";
 import { LogSessionSheet } from "@/components/GameEditDialog";
@@ -72,7 +75,9 @@ function Dashboard() {
   const gotm = gameOfMonth(data.entries);
   const memories = memoryBox(data.entries);
   const stats = computeStats(data.entries);
-  const { level } = computeLevel(data.entries);
+  const prog = computeProgress(data.entries);
+  const level = prog.level;
+  const streak = computeStreak(data.entries);
 
   const monthHours = useMemo(() => {
     const key = new Date().toISOString().slice(0, 7);
@@ -145,6 +150,36 @@ function Dashboard() {
             </p>
           </div>
         </div>
+        {/* بطاقة التقدّم المختصرة */}
+        <Link
+          to="/progress"
+          className="block rounded-3xl border border-primary/30 bg-card p-4 transition-colors hover:border-primary/60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--gradient-primary)] font-display text-sm font-black text-primary-foreground">
+              {num(level)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate font-display text-sm font-extrabold">{prog.rank.ar}</p>
+                <span className="flex items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-[10px] text-primary">
+                  <Flame className="size-3" />
+                  {num(streak)} يوم
+                </span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-[var(--gradient-primary)]"
+                  style={{ width: `${prog.pct}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {prog.max ? "أقصى مستوى" : `باقي ${num(prog.toNext)} XP للمستوى ${num(level + 1)}`}
+              </p>
+            </div>
+            <ChevronLeft className="size-4 shrink-0 text-muted-foreground" />
+          </div>
+        </Link>
         <div className="grid grid-cols-3 gap-2 rounded-3xl border border-border bg-card p-2">
           {quick.map((q) => (
             <div key={q.label} className="rounded-2xl bg-secondary/40 px-2 py-3 text-center">
