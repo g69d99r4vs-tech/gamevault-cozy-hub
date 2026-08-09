@@ -32,7 +32,6 @@ export const Route = createFileRoute("/profile")({
   component: MePage,
 });
 
-
 function MePage() {
   const data = useCurrentData();
   const users = useStore((s) => s.users);
@@ -41,7 +40,10 @@ function MePage() {
   const prog = computeProgress(data.entries);
   const streak = computeStreak(data.entries);
   const achievements = computeAchievements(data.entries);
-  const recent = achievements.filter((x) => x.unlocked).slice(-4).reverse();
+  const recent = achievements
+    .filter((x) => x.unlocked)
+    .slice(-4)
+    .reverse();
   const badges = unlockedRewards(prog.level);
 
   const thisYear = new Date().getFullYear();
@@ -142,7 +144,10 @@ function MePage() {
         {recent.length ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {recent.map((x) => (
-              <div key={x.id} className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-3">
+              <div
+                key={x.id}
+                className="flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-3"
+              >
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary/60 text-lg">
                   {x.icon}
                 </span>

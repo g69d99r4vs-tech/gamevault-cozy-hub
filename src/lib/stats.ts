@@ -44,7 +44,9 @@ export function computeStats(entries: GameEntry[]) {
     monthly.set(k, { games: prev.games + 1, hours: prev.hours + e.hours });
   });
 
-  const firstAt = [...entries.filter((e) => !e.legacy)].sort((a, b) => a.addedAt.localeCompare(b.addedAt))[0]?.addedAt;
+  const firstAt = [...entries.filter((e) => !e.legacy)].sort((a, b) =>
+    a.addedAt.localeCompare(b.addedAt),
+  )[0]?.addedAt;
   const days = firstAt
     ? Math.max(1, Math.ceil((Date.now() - new Date(firstAt).getTime()) / 86400000))
     : 1;
@@ -74,8 +76,6 @@ export function computeStats(entries: GameEntry[]) {
     avgMonthlyCompleted: liveCompleted.length / months,
   };
 }
-
-
 
 export type Achievement = {
   id: string;
@@ -111,8 +111,22 @@ export function computeAchievements(entries: GameEntry[]): Achievement[] {
   return [
     make("first", "اللعبة الأولى", "أنهِ أول لعبة", "🎯", completed.length, 1),
     make("horror", "أول لعبة رعب", "أنهِ أول لعبة رعب", "👻", horror.length, 1),
-    make("platinum", "أول بلاتينيوم", "أكمل لعبة بنسبة 100%", "🏆", completed.filter((e) => e.fullCompletion).length, 1),
-    make("coop", "لعبناها سوا", "أنهِ لعبة تعاونية مع أخوك", "🎮🎮", completed.filter((e) => e.coop).length, 1),
+    make(
+      "platinum",
+      "أول بلاتينيوم",
+      "أكمل لعبة بنسبة 100%",
+      "🏆",
+      completed.filter((e) => e.fullCompletion).length,
+      1,
+    ),
+    make(
+      "coop",
+      "لعبناها سوا",
+      "أنهِ لعبة تعاونية مع أخوك",
+      "🎮🎮",
+      completed.filter((e) => e.coop).length,
+      1,
+    ),
     make("h100", "100 ساعة", "العب 100 ساعة", "⏱️", hours, 100),
     make("h500", "500 ساعة", "العب 500 ساعة", "🔥", hours, 500),
     make("h1000", "1000 ساعة", "العب 1000 ساعة", "💎", hours, 1000),
@@ -120,10 +134,31 @@ export function computeAchievements(entries: GameEntry[]): Achievement[] {
     make("g25", "25 لعبة", "أنهِ 25 لعبة", "🕹️", completed.length, 25),
     make("g50", "50 لعبة", "أنهِ 50 لعبة", "🚀", completed.length, 50),
     make("g100", "100 لعبة", "أنهِ 100 لعبة", "👑", completed.length, 100),
-    make("re", "سيد Resident Evil", "أنهِ 5 من سلسلة Resident Evil", "🧟", franchise(/resident evil/i), 5),
-    make("sh", "سيد Silent Hill", "أنهِ 3 من سلسلة Silent Hill", "🌫️", franchise(/silent hill/i), 3),
+    make(
+      "re",
+      "سيد Resident Evil",
+      "أنهِ 5 من سلسلة Resident Evil",
+      "🧟",
+      franchise(/resident evil/i),
+      5,
+    ),
+    make(
+      "sh",
+      "سيد Silent Hill",
+      "أنهِ 3 من سلسلة Silent Hill",
+      "🌫️",
+      franchise(/silent hill/i),
+      3,
+    ),
     make("collector", "جامع الألعاب", "اجمع 50 لعبة في المكتبة", "📚", entries.length, 50),
-    make("completionist", "المكمّل", "أكمل 10 ألعاب بنسبة 100%", "✨", completed.filter((e) => e.fullCompletion).length, 10),
+    make(
+      "completionist",
+      "المكمّل",
+      "أكمل 10 ألعاب بنسبة 100%",
+      "✨",
+      completed.filter((e) => e.fullCompletion).length,
+      10,
+    ),
   ];
 }
 
@@ -156,7 +191,13 @@ export const FRANCHISE_SERIES: { name: string; match: RegExp; order: string[] }[
   {
     name: "God of War",
     match: /god of war/i,
-    order: ["God of War", "God of War II", "God of War III", "God of War (2018)", "God of War Ragnarök"],
+    order: [
+      "God of War",
+      "God of War II",
+      "God of War III",
+      "God of War (2018)",
+      "God of War Ragnarök",
+    ],
   },
   {
     name: "Uncharted",
@@ -285,8 +326,7 @@ export function gameOfMonth(entries: GameEntry[]): { game: GameEntry; hours: num
         e.sessions
           ?.filter((s) => s.date?.startsWith(key))
           .reduce((s, x) => s + x.minutes / 60, 0) ?? 0;
-      const touched =
-        e.completedAt?.startsWith(key) || e.startedAt?.startsWith(key) ? e.hours : 0;
+      const touched = e.completedAt?.startsWith(key) || e.startedAt?.startsWith(key) ? e.hours : 0;
       return { game: e, hours: sessionHours || touched };
     })
     .filter((x) => x.hours > 0)
@@ -359,7 +399,9 @@ export function recommendation(entries: GameEntry[]): { game: GameEntry; reason:
 export function computeWrap(entries: GameEntry[], year: number) {
   const inYear = entries.filter((e) => !e.legacy && e.completedAt?.startsWith(String(year)));
   const hoursOfYear = inYear.reduce((s, e) => s + e.hours, 0);
-  const rated = inYear.filter((e) => e.personalRating > 0).sort((a, b) => b.personalRating - a.personalRating);
+  const rated = inYear
+    .filter((e) => e.personalRating > 0)
+    .sort((a, b) => b.personalRating - a.personalRating);
   const months = new Map<string, number>();
   inYear.forEach((e) => {
     const k = e.completedAt!.slice(0, 7);
@@ -369,15 +411,18 @@ export function computeWrap(entries: GameEntry[], year: number) {
 
   // خريطة الحرارة: ساعات لكل يوم من أيام السنة
   const heat = new Map<string, number>();
-  entries.filter((e) => !e.legacy).forEach((e) => {
-    (e.sessions ?? []).forEach((s) => {
-      if (s.date?.startsWith(String(year))) heat.set(s.date, (heat.get(s.date) ?? 0) + s.minutes / 60);
+  entries
+    .filter((e) => !e.legacy)
+    .forEach((e) => {
+      (e.sessions ?? []).forEach((s) => {
+        if (s.date?.startsWith(String(year)))
+          heat.set(s.date, (heat.get(s.date) ?? 0) + s.minutes / 60);
+      });
+      if (e.completedAt?.startsWith(String(year))) {
+        const d = e.completedAt.slice(0, 10);
+        if (!(e.sessions ?? []).length) heat.set(d, (heat.get(d) ?? 0) + Math.min(e.hours, 8));
+      }
     });
-    if (e.completedAt?.startsWith(String(year))) {
-      const d = e.completedAt.slice(0, 10);
-      if (!(e.sessions ?? []).length) heat.set(d, (heat.get(d) ?? 0) + Math.min(e.hours, 8));
-    }
-  });
 
   return {
     year,
@@ -463,4 +508,3 @@ export const hallBadge = (e: GameEntry) => {
   if (e.coop) return "أفضل لعبة سوا";
   return "أسطورة شخصية";
 };
-

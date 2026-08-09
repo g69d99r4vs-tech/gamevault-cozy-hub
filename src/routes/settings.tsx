@@ -347,7 +347,10 @@ function SettingsPage() {
       >
         <AlertDialog onOpenChange={(o) => !o && setConfirmStep(false)}>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" className="w-full rounded-xl border-destructive/50 text-destructive">
+            <Button
+              variant="outline"
+              className="w-full rounded-xl border-destructive/50 text-destructive"
+            >
               تصفير المستوى ونقاط الخبرة
             </Button>
           </AlertDialogTrigger>

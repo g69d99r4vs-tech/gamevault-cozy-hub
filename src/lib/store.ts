@@ -26,8 +26,7 @@ export const DIFFICULTIES: { v: Difficulty; l: string; mult: number }[] = [
   { v: "extreme", l: "Souls-like", mult: 2.25 },
 ];
 
-export const difficultyLabel = (d: Difficulty) =>
-  DIFFICULTIES.find((x) => x.v === d)?.l ?? "عادية";
+export const difficultyLabel = (d: Difficulty) => DIFFICULTIES.find((x) => x.v === d)?.l ?? "عادية";
 
 export type PlaySession = {
   id: string;
@@ -149,7 +148,6 @@ const emptyUser = (name: string, avatar: string, bio: string): UserData => ({
 export const isFutureRelease = (released: string | null | undefined) =>
   !released || new Date(released).getTime() > Date.now();
 
-
 export const resolveStatus = (released: string | null | undefined, wanted: Status): Status =>
   isFutureRelease(released) ? "hype" : wanted;
 
@@ -198,11 +196,12 @@ export const statusLabel: Record<Status, string> = {
 };
 
 /** توافق مع البيانات القديمة: حالة «التالي» أصبحت «الانتظار» */
-export const normalizeStatus = (s: string): Status =>
-  s === "next" ? "backlog" : (s as Status);
+export const normalizeStatus = (s: string): Status => (s === "next" ? "backlog" : (s as Status));
 
 const normalizeEntries = (entries: GameEntry[]): GameEntry[] =>
-  entries.map((e) => (e.status === ("next" as unknown as Status) ? { ...e, status: "backlog" as Status } : e));
+  entries.map((e) =>
+    e.status === ("next" as unknown as Status) ? { ...e, status: "backlog" as Status } : e,
+  );
 
 export const otherUser = (u: UserId): UserId => (u === "faisal" ? "mishal" : "faisal");
 
@@ -216,20 +215,32 @@ export function applyStatusDates(before: GameEntry, after: GameEntry): GameEntry
     if (!startedAt) startedAt = before.startedAt ?? now;
   }
   if (after.status !== "completed") completedAt = null;
-  return { ...after, startedAt, completedAt, progress: after.status === "completed" ? 100 : after.progress };
+  return {
+    ...after,
+    startedAt,
+    completedAt,
+    progress: after.status === "completed" ? 100 : after.progress,
+  };
 }
 
 export const useStore = create<State>()(
   persist(
     (set, get) => {
       const log = (u: UserData, uid: UserId, type: ActivityType, text: string): UserData => {
-        const activity: Activity = { id: crypto.randomUUID(), type, text, at: new Date().toISOString() };
+        const activity: Activity = {
+          id: crypto.randomUUID(),
+          type,
+          text,
+          at: new Date().toISOString(),
+        };
         pushActivity(uid, activity);
         return { ...u, activities: [activity, ...u.activities].slice(0, 300) };
       };
 
       const mutate = (fn: (u: UserData, uid: UserId) => UserData) =>
-        set((s) => ({ users: { ...s.users, [s.currentUser]: fn(s.users[s.currentUser], s.currentUser) } }));
+        set((s) => ({
+          users: { ...s.users, [s.currentUser]: fn(s.users[s.currentUser], s.currentUser) },
+        }));
 
       // mirrors a co-op entry (hours + completion) into the other brother's library
       const syncCoop = (s: State, entry: GameEntry): State["users"] => {
@@ -253,7 +264,10 @@ export const useStore = create<State>()(
                 : e,
             )
           : [mirrored, ...data.entries];
-        pushEntries(other, entries.filter((e) => e.id === entry.id));
+        pushEntries(
+          other,
+          entries.filter((e) => e.id === entry.id),
+        );
         return { ...s.users, [other]: { ...data, entries } };
       };
 
@@ -268,7 +282,10 @@ export const useStore = create<State>()(
           const before = data.entries.find((e) => e.id === id);
           if (!before) return s;
           const after = applyStatusDates(before, { ...before, ...patch });
-          let next: UserData = { ...data, entries: data.entries.map((e) => (e.id === id ? after : e)) };
+          let next: UserData = {
+            ...data,
+            entries: data.entries.map((e) => (e.id === id ? after : e)),
+          };
 
           // أحداث الخط الزمني التلقائية
           const events: [ActivityType, string][] = activity ? activity(after) : [];
@@ -309,7 +326,10 @@ export const useStore = create<State>()(
             const entry = entryFromRawg(g, status);
             if (status === "backlog")
               entry.queuePosition =
-                Math.max(0, ...u.entries.filter((e) => e.status === "backlog").map((e) => e.queuePosition)) + 1;
+                Math.max(
+                  0,
+                  ...u.entries.filter((e) => e.status === "backlog").map((e) => e.queuePosition),
+                ) + 1;
             pushEntry(uid, entry);
             return log(
               { ...u, entries: [entry, ...u.entries] },
@@ -353,7 +373,9 @@ export const useStore = create<State>()(
             const after = { ...entry, favorite: !entry.favorite };
             pushEntry(uid, after);
             const next = { ...u, entries: u.entries.map((e) => (e.id === id ? after : e)) };
-            return after.favorite ? log(next, uid, "favorite", `أضاف «${entry.name}» إلى المفضلة`) : next;
+            return after.favorite
+              ? log(next, uid, "favorite", `أضاف «${entry.name}» إلى المفضلة`)
+              : next;
           }),
         completeGame: (id, data) =>
           applyEntry(
@@ -370,7 +392,8 @@ export const useStore = create<State>()(
                   ? Math.max(
                       0,
                       Math.round(
-                        (new Date(e.completedAt).getTime() - new Date(e.startedAt).getTime()) / 86400000,
+                        (new Date(e.completedAt).getTime() - new Date(e.startedAt).getTime()) /
+                          86400000,
                       ),
                     )
                   : null;
@@ -390,7 +413,10 @@ export const useStore = create<State>()(
               const i = ids.indexOf(e.id);
               return i === -1 ? e : { ...e, queuePosition: i + 1 };
             });
-            pushEntries(uid, entries.filter((e) => ids.includes(e.id)));
+            pushEntries(
+              uid,
+              entries.filter((e) => ids.includes(e.id)),
+            );
             return { ...u, entries };
           }),
         addSession: (id, session) =>
@@ -425,7 +451,8 @@ export const useStore = create<State>()(
             pushProfile(uid, profile);
             return { ...u, profile };
           }),
-        addGoal: (g) => mutate((u) => ({ ...u, goals: [...u.goals, { ...g, id: crypto.randomUUID() }] })),
+        addGoal: (g) =>
+          mutate((u) => ({ ...u, goals: [...u.goals, { ...g, id: crypto.randomUUID() }] })),
         removeGoal: (id) => mutate((u) => ({ ...u, goals: u.goals.filter((g) => g.id !== id) })),
         resetAll: async () => {
           const uid = get().currentUser;

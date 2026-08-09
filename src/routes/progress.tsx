@@ -36,8 +36,16 @@ function ProgressPage() {
     { icon: Timer, label: "ساعات اللعب", value: num(s.hours, 1) },
     { icon: Zap, label: "نقاط الخبرة", value: num(p.xp) },
     { icon: Flame, label: "سلسلة الأيام", value: `${num(streak)} يوم` },
-    { icon: Star, label: "إنجازات مفتوحة", value: `${num(unlocked.length)}/${num(achievements.length)}` },
-    { icon: Trophy, label: "بلاتينيوم", value: num(data.entries.filter((e) => e.fullCompletion).length) },
+    {
+      icon: Star,
+      label: "إنجازات مفتوحة",
+      value: `${num(unlocked.length)}/${num(achievements.length)}`,
+    },
+    {
+      icon: Trophy,
+      label: "بلاتينيوم",
+      value: num(data.entries.filter((e) => e.fullCompletion).length),
+    },
   ];
 
   return (
@@ -56,7 +64,10 @@ function ProgressPage() {
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-[2rem] border border-primary/30 bg-card p-6"
       >
-        <div className="absolute inset-0 opacity-60" style={{ background: "var(--gradient-hero)" }} />
+        <div
+          className="absolute inset-0 opacity-60"
+          style={{ background: "var(--gradient-hero)" }}
+        />
         <div className="relative flex flex-wrap items-center gap-5">
           <div className="relative">
             <UserAvatar value={data.profile.avatar} size={92} />
@@ -72,7 +83,9 @@ function ProgressPage() {
             <div className="mt-4">
               <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
                 <span>{num(p.xp)} XP</span>
-                <span>{p.max ? "أقصى مستوى" : `باقي ${num(p.toNext)} XP للمستوى ${num(p.level + 1)}`}</span>
+                <span>
+                  {p.max ? "أقصى مستوى" : `باقي ${num(p.toNext)} XP للمستوى ${num(p.level + 1)}`}
+                </span>
               </div>
               <div className="h-3 overflow-hidden rounded-full bg-secondary">
                 <motion.div
@@ -191,7 +204,10 @@ function ProgressPage() {
                 </div>
               </div>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${a.progress}%` }} />
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${a.progress}%` }}
+                />
               </div>
             </div>
           ))}
